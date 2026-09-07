@@ -75,6 +75,8 @@ select:hover,button:hover{border-color:var(--accent)}
 .history-log{background:rgba(0,0,0,.2);border-radius:10px;padding:5px;max-height:55px;overflow-y:auto;font-size:.6rem}
 #map{flex:1;height:100vh;background:#0a0d12;position:relative;cursor:crosshair;transition:filter .5s}
 .leaflet-container{background:#0a0d12!important}
+.leaflet-container .leaflet-tile-pane{filter:brightness(.72) saturate(.8) contrast(1.05);transition:filter .5s}
+.map-dark-mode .leaflet-container .leaflet-tile-pane{filter:brightness(.4) saturate(.5) contrast(1.1)}
 .blast-circle{position:absolute;border-radius:50%;pointer-events:none;z-index:500;animation:blastAnim 2.8s ease-out forwards;mix-blend-mode:screen}
 @keyframes blastAnim{0%{transform:scale(.05);opacity:1}40%{transform:scale(.8);opacity:.9}100%{transform:scale(1.8);opacity:0}}
 .flash{position:absolute;pointer-events:none;z-index:501;background:#fff;border-radius:50%;animation:flashAnim .6s ease-out forwards}
@@ -572,8 +574,20 @@ function animateFw(){if(!$('introOverlay').classList.contains('active'))return;c
 // ========== MAP ==========
 function initMap(){if(map)return;
 map=L.map('map',{center:[20,0],zoom:2.5,minZoom:2,maxZoom:14,zoomControl:true,worldCopyJump:true});
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19}).addTo(map);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19,opacity:.15}).addTo(map);
+const TILE_PROVIDERS=[
+{tpl:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',sub:['a','b','c'],attrib:'© OpenStreetMap'},
+{tpl:'https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png',sub:['a','b','c'],attrib:'© OSM DE'},
+{tpl:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',sub:null,attrib:'© Esri'}
+];
+let tileLayerOn=null,tileProvIdx=0;
+function makeTileLayer(idx){if(tileLayerOn){try{map.removeLayer(tileLayerOn)}catch(e){}}
+const p=TILE_PROVIDERS[idx];tileProvIdx=idx;
+let sub=p.sub;if(sub&&!Array.isArray(sub))sub=sub.split('');
+const url=p.tpl.replace('{s}',sub?sub[0]:'') ;
+const ly=L.tileLayer(url,{attribution:p.attrib,maxZoom:19,opacity:1});
+ly.on('tileerror',()=>{try{if(tileProvIdx<TILE_PROVIDERS.length-1)makeTileLayer(tileProvIdx+1)}catch(e){}});
+tileLayerOn=ly;ly.addTo(map);}
+makeTileLayer(0);
 CITIES.forEach(c=>{L.circleMarker(c.coords,{radius:3,color:'#00ccff',fillColor:'#00aaff',fillOpacity:.5,weight:1}).addTo(map).bindTooltip(`${c.name} (${c.country})`)});
 PLANTS.forEach(p=>{L.circleMarker(p.coords,{radius:5,color:'#ffaa00',fillColor:'#ff8800',fillOpacity:.8,weight:1}).addTo(map).bindTooltip(`☢️ ${p.name}`)});
 CONFLICT_ZONES.forEach(cz=>{const m=L.circleMarker(cz.coords,{radius:11,color:'#ff0000',fillColor:'#ff0000',fillOpacity:.5,weight:2,dashArray:'6 4'}).addTo(map);m.bindTooltip(`⚔️ ${cz.name}: ${cz.desc}`);if(m._path)m._path.classList.add('conflict-pulse')});
@@ -897,5 +911,4 @@ startDynamicWind();
 })();
 </script>
 </body>
-<!-- deploy-sync:2026-09-07 -->
 </html>
