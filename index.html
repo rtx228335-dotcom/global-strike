@@ -1,0 +1,900 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>🌍 GLOBAL STRIKE — RELEASE</title>
+    <link rel="stylesheet" href="leaflet.css" />
+<style>
+:root{--bg:#0a0e14;--panel:rgba(13,19,27,.97);--accent:#ffaa00;--red:#ff4d4d;--green:#4caf50;--blue:#4da6ff;--text:#e0e0e0;--card:rgba(25,33,45,.9);--gold:#ffd700}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;color:var(--text);user-select:none}
+#startOverlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#141a28,#070a10)}
+#startOverlay.hidden{display:none}
+#startBgCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+#startOverlay>*:not(#startBgCanvas){position:relative;z-index:1}
+#startTitle{font-size:3.8rem;font-weight:900;background:linear-gradient(135deg,#fff,#ffcc66,#ff8800,#ff4d4d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 80px rgba(255,150,0,.4);margin-bottom:6px;animation:pulse 3s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+#startSubtitle{font-size:.9rem;color:#888;margin-bottom:20px;letter-spacing:4px;text-transform:uppercase}
+#startBtn{font-size:1.6rem;padding:16px 70px;background:linear-gradient(135deg,#ffd700,#ff8800);color:#1a1a1a;border:none;border-radius:60px;cursor:pointer;box-shadow:0 0 60px rgba(255,180,0,.6);transition:all .3s;text-transform:uppercase;font-weight:900}
+#startBtn:hover{transform:scale(1.12);box-shadow:0 0 120px rgba(255,220,0,.9)}
+#startCredits{margin-top:20px;font-size:.78rem;color:#666;text-align:center;line-height:1.6}
+#startBest{position:absolute;top:20px;right:30px;font-size:.85rem;color:var(--gold);z-index:2;text-align:right}
+#startBest small{font-size:.65rem;color:#555;display:block}
+#introOverlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9997;background:radial-gradient(circle at center,#1a1f2b,#0b0e14);display:flex;flex-direction:column;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:opacity .5s,visibility .5s}
+#introOverlay.active{visibility:visible;opacity:1}
+#fireworksCanvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9998}
+#introText{font-size:2.4rem;color:var(--gold);text-shadow:0 0 40px rgba(255,215,0,.9);text-align:center;padding:0 30px;line-height:1.4;z-index:9999;font-weight:700}
+#appContent{display:flex;width:100%;height:100vh;visibility:hidden;opacity:0;transition:opacity .8s}
+#appContent.visible{visibility:visible;opacity:1}
+#panel{width:460px;min-width:460px;background:var(--panel);backdrop-filter:blur(25px);border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;z-index:1000;transition:margin-left .3s}
+#panel.hidden{margin-left:-460px}
+.tab-bar{display:flex;background:rgba(0,0,0,.35);border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:10}
+.tab-btn{flex:1;padding:10px 4px;text-align:center;font-size:.7rem;cursor:pointer;border:none;background:none;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.8px;transition:all .2s;border-bottom:2px solid transparent}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(255,170,0,.05)}
+.tab-btn:hover{color:#ccc}
+.tab-panel{display:none;overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:#444 transparent}
+.tab-panel.active{display:flex;flex-direction:column}
+.tab-panel::-webkit-scrollbar{width:5px}
+.tab-panel::-webkit-scrollbar-thumb{background:#444;border-radius:10px}
+.resbar{display:flex;gap:6px;padding:6px 10px;background:rgba(0,0,0,.35)}
+.reschip{flex:1;text-align:center;border-radius:8px;padding:4px 3px;font-size:.68rem;background:rgba(255,255,255,.04)}
+.reschip b{display:block;font-size:.88rem;color:var(--gold)}
+.controls{padding:8px 12px;display:flex;flex-direction:column;gap:8px}
+.ctrl-row{display:flex;gap:6px;align-items:center}
+.ctrl-group{display:flex;flex-direction:column;gap:3px;flex:1}
+.ctrl-group label{font-size:.62rem;text-transform:uppercase;letter-spacing:.8px;color:#aaa;font-weight:600}
+select,button,input[type=range]{background:var(--card);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:7px 11px;font-size:.84rem;outline:none;transition:all .25s;cursor:pointer;font-family:inherit}
+select:hover,button:hover{border-color:var(--accent)}
+.bomb-card{background:var(--card);border-radius:12px;padding:8px;display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.06)}
+.bomb-icon{font-size:2.2rem;width:44px;text-align:center}
+.bomb-name{font-weight:700;font-size:.88rem}
+.bomb-meta{font-size:.62rem;color:#999}
+.badge{display:inline-block;padding:1px 6px;border-radius:20px;font-size:.55rem;font-weight:600;text-transform:uppercase;margin-right:2px}
+.badge-country{background:rgba(70,130,180,.4);color:#aadcff}
+.badge-cat{background:rgba(255,165,0,.25);color:#ffb84d}
+.badge-power{background:rgba(255,60,60,.3);color:#ff8888}
+.height-selector{display:flex;gap:4px}
+.height-btn{flex:1;padding:5px 2px;font-size:.65rem;text-align:center;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:8px;cursor:pointer;transition:all .2s}
+.height-btn.active{border-color:var(--accent);background:rgba(255,170,0,.2)}
+.wind-display{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.3);border-radius:10px;padding:6px 9px}
+.wind-arrow{font-size:1.4rem;transition:transform .3s}
+.launch-btn{background:linear-gradient(135deg,#ff8c00,#ff3b3b);border:none;font-weight:700;padding:11px;font-size:.95rem;border-radius:12px;cursor:pointer;color:#fff;letter-spacing:1px;transition:all .2s}
+.launch-btn:hover{transform:scale(1.02);box-shadow:0 0 25px rgba(255,60,60,.4)}
+.score-bar{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.35);border-radius:10px;padding:6px 10px}
+.score-value{font-size:1.3rem;font-weight:800;color:var(--accent)}
+.combo-bar{background:rgba(255,100,0,.12);border:1px solid rgba(255,150,0,.3)}
+.combo-value{font-size:1.1rem;font-weight:800;color:var(--gold)}
+.stats-row{display:flex;gap:4px;flex-wrap:wrap}
+.stat-chip{background:rgba(0,0,0,.3);border-radius:20px;padding:2px 8px;font-size:.6rem;color:#aaa}
+#report{background:rgba(0,0,0,.4);border-radius:12px;padding:8px;font-size:.76rem;max-height:160px;overflow-y:auto}
+.report-item{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.news-feed{background:rgba(0,0,0,.3);border-radius:10px;padding:6px;max-height:110px;overflow-y:auto;font-size:.64rem;line-height:1.5}
+.news-item{padding:1px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.news-time{color:#555;margin-right:4px}
+.history-log{background:rgba(0,0,0,.2);border-radius:10px;padding:5px;max-height:55px;overflow-y:auto;font-size:.6rem}
+#map{flex:1;height:100vh;background:#0a0d12;position:relative;cursor:crosshair;transition:filter .5s}
+.leaflet-container{background:#0a0d12!important}
+.blast-circle{position:absolute;border-radius:50%;pointer-events:none;z-index:500;animation:blastAnim 2.8s ease-out forwards;mix-blend-mode:screen}
+@keyframes blastAnim{0%{transform:scale(.05);opacity:1}40%{transform:scale(.8);opacity:.9}100%{transform:scale(1.8);opacity:0}}
+.flash{position:absolute;pointer-events:none;z-index:501;background:#fff;border-radius:50%;animation:flashAnim .6s ease-out forwards}
+@keyframes flashAnim{0%{transform:scale(0);opacity:1}100%{transform:scale(3);opacity:0}}
+.shockwave{position:absolute;pointer-events:none;z-index:502;border:2px solid rgba(255,255,255,.8);border-radius:50%;animation:shockwaveAnim 2s ease-out forwards}
+@keyframes shockwaveAnim{0%{transform:scale(.1);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.mushroom{position:absolute;pointer-events:none;z-index:503;animation:mushAnim 4s ease-out forwards}
+@keyframes mushAnim{0%{transform:scale(.1) translateY(0);opacity:.9}60%{transform:scale(1) translateY(-60px);opacity:.8}100%{transform:scale(.6) translateY(-120px);opacity:0}}
+.shake-ani{transition:transform .05s linear}
+#cornerControls{position:absolute;top:10px;right:10px;z-index:1100;display:flex;gap:6px;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);border-radius:30px;padding:4px 10px}
+#cornerControls span{font-size:.82rem;font-weight:700;color:var(--accent)}
+.icon-btn{background:none;border:none;font-size:1.1rem;cursor:pointer;padding:3px 6px;border-radius:50%;transition:background .2s;color:#ccc}
+.icon-btn:hover{background:rgba(255,255,255,.1)}
+#pauseBtn.paused-on{background:rgba(255,170,0,.25);color:#ffaa00;animation:pulsePause 1.2s infinite}
+@keyframes pulsePause{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+#pauseOverlay{position:absolute;inset:0;z-index:3000;background:rgba(5,8,14,.6);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:.3s}
+#pauseOverlay.active{visibility:visible;opacity:1}
+.pause-box{background:rgba(13,19,27,.97);border:1px solid rgba(255,170,0,.3);border-radius:24px;padding:30px 44px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.icon-btn:hover{background:rgba(255,255,255,.15)}
+#targetIndicator{position:absolute;bottom:8px;right:8px;z-index:1100;background:rgba(0,0,0,.6);border-radius:10px;padding:4px 10px;font-size:.72rem;color:#aaa}
+#radMeter{position:absolute;top:10px;left:10px;z-index:1100;background:rgba(0,0,0,.65);border-radius:12px;padding:5px 10px;font-size:.68rem;color:#aaa;pointer-events:auto}
+#radMeter b{color:#ffeb3b}
+#radResetBtn{pointer-events:auto;cursor:pointer}
+/* Курсоры: интерфейсы - обычный/указатель, карта - игровой крестик */
+#panel,#panel *{cursor:default}
+#panel button,button,select,.icon-btn,.btn-pri,.btn-sec,.height-btn,.tab-btn{pointer-events:auto}
+button,button:active,select,.icon-btn,.btn-pri,.btn-sec,.height-btn,.tab-btn,#radResetBtn,#modeAttack,#modeScout{cursor:pointer}
+#panel .icon-btn,#panel button,#panel select{cursor:pointer}
+#map{cursor:crosshair}
+#map .leaflet-container{cursor:crosshair}
+#radMeter,#cornerControls,#targetIndicator,#reactBanner,#campaignBanner{cursor:default}
+#radUpdateBtn,#radResetBtn,#togglePanelBtn,#modeAttack,#modeScout,#launchBtn,#randomBombBtn{cursor:pointer}
+#reactBanner{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);z-index:1100;background:rgba(220,20,20,.85);color:#fff;padding:10px 20px;border-radius:16px;font-size:.82rem;font-weight:700;text-align:center;max-width:400px;visibility:hidden;opacity:0;transition:.5s;pointer-events:none;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#reactBanner.active{visibility:visible;opacity:1}
+#campaignBanner{position:absolute;top:50px;left:50%;transform:translateX(-50%);z-index:1100;background:linear-gradient(135deg,rgba(255,215,0,.9),rgba(255,100,0,.9));color:#1a1a1a;padding:12px 24px;border-radius:16px;font-size:.9rem;font-weight:700;text-align:center;visibility:hidden;opacity:0;transition:.5s;pointer-events:none;box-shadow:0 10px 40px rgba(0,0,0,.5);max-width:450px}
+#campaignBanner.active{visibility:visible;opacity:1}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:2000;display:flex;align-items:center;justify-content:center;visibility:hidden;opacity:0;transition:.3s}
+.modal.active{visibility:visible;opacity:1}
+.modal-content{background:#161d2b;border-radius:20px;padding:22px;max-width:500px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.8);max-height:85vh;overflow-y:auto}
+.modal-content h3{margin-bottom:10px;color:var(--accent)}
+.m-field{margin-bottom:8px}
+.m-field label{display:block;font-size:.72rem;margin-bottom:2px;color:#aaa}
+.m-field input,.m-field select{width:100%;padding:6px 10px;background:#0d1117;border:1px solid #333;border-radius:8px;color:#fff;font-size:.82rem}
+.m-buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:10px}
+.btn-pri{background:linear-gradient(135deg,#ff8c00,#ff3b3b);border:none;padding:8px 16px;border-radius:8px;font-weight:600;color:#fff;cursor:pointer}
+.btn-sec{background:#2a3444;border:1px solid #444;padding:8px 16px;border-radius:8px;color:#fff;cursor:pointer}
+.btn-gold{background:linear-gradient(135deg,#d4af37,#b8860b);border:none;padding:8px 16px;border-radius:8px;font-weight:700;color:#1a1a1a;cursor:pointer}
+.campaign-card{padding:10px;border-radius:12px;background:rgba(255,255,255,.04);margin-bottom:8px;border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:.2s}
+.campaign-card:hover{border-color:var(--accent)}
+.campaign-card.done{opacity:.6;border-color:var(--green)}
+.campaign-card.active-c{background:rgba(255,170,0,.1);border-color:var(--accent)}
+.campaign-card .c-name{font-weight:700;font-size:.82rem}
+.campaign-card .c-desc{font-size:.7rem;color:#999}
+.campaign-card .c-status{font-size:.68rem;color:var(--gold);font-weight:600}
+.mission-item{padding:7px;border-radius:10px;background:rgba(255,255,255,.03);margin-bottom:5px;border:1px solid rgba(255,255,255,.06)}
+.mission-item.done{opacity:.7;border-color:var(--green)}
+.mission-item .m-name{font-weight:700;font-size:.8rem}
+.mission-item .m-reward{color:var(--green);font-size:.68rem}
+.shop-item{padding:7px;border-radius:10px;background:rgba(255,255,255,.03);margin-bottom:5px;border:1px solid rgba(255,255,255,.06)}
+.shop-item .s-row{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.shop-item .s-desc{font-size:.66rem;color:#999;margin-top:2px}
+.shop-item .s-btn{background:linear-gradient(135deg,#4da6ff,#2a6fd6);border:none;color:#fff;padding:4px 10px;border-radius:8px;font-size:.72rem;font-weight:600;cursor:pointer}
+.shop-item .s-btn:disabled{background:#333;cursor:not-allowed;color:#777}
+.shop-item .s-btn.owned{background:#2a6f2a}
+#leaderList{font-size:.78rem}
+.leader-entry{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.leader-entry .rnk{color:#666;width:20px}
+.leader-entry .nm{flex:1}
+.leader-entry .sc{color:var(--gold);font-weight:700}
+.leader-card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:8px;border:2px solid rgba(255,255,255,.08);cursor:pointer;transition:.25s;display:flex;align-items:center;gap:12px}
+.leader-card:hover{border-color:var(--accent)}
+.leader-card.selected{border-color:var(--gold);background:rgba(255,215,0,.08)}
+.leader-card.locked{opacity:.5;border-color:#333}
+.leader-card .lc-avatar{width:56px;height:56px;border-radius:50%;background-size:cover;background-position:center;flex-shrink:0;border:2px solid rgba(255,255,255,.15)}
+.leader-card .lc-info{flex:1;min-width:0}
+.leader-card .lc-name{font-weight:700;font-size:.82rem}
+.leader-card .lc-country{font-size:.68rem;color:#999}
+.leader-card .lc-bonus{font-size:.68rem;color:var(--green);margin-top:2px}
+.leader-card .lc-status{font-size:.62rem;color:#888;margin-top:1px}
+.leader-card .lc-lock{font-size:1.6rem;color:#555;flex-shrink:0;text-align:center;width:40px}
+.conflict-pulse{animation:conflictPulse 1.5s infinite}
+@keyframes conflictPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.prestige-btn{background:linear-gradient(135deg,#8b0000,#4a0000);border:none;padding:6px 12px;border-radius:10px;color:#fff;font-size:.7rem;cursor:pointer;font-weight:600;transition:.2s}
+.prestige-btn:hover{transform:scale(1.05);box-shadow:0 0 20px rgba(139,0,0,.5)}
+audio{display:none}
+@media(max-width:900px){
+#panel{width:100%;min-width:100%;max-height:48vh}
+#map{height:52vh}
+#startTitle{font-size:2rem}
+}
+/* ===== UI POLISH ===== */
+button,select,input[type=range]{transition:all .22s ease}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translateY(0) scale(.98)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#3a4a5e,#2a3444);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:#4a5a70}
+.modal-content{box-shadow:0 20px 70px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.05);backdrop-filter:blur(6px)}
+.modal-content h3{letter-spacing:.5px}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.bomb-card{transition:transform .2s ease, border-color .2s ease}
+.bomb-card:hover{transform:translateY(-2px);border-color:rgba(255,170,0,.35)}
+.score-value{letter-spacing:.5px}
+.combo-value{letter-spacing:.5px}
+.leader-card{transition:transform .18s ease, border-color .2s ease, box-shadow .2s ease}
+.leader-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.leader-card.selected{box-shadow:0 0 18px rgba(255,215,0,.18)}
+.shop-item,.mission-item,.campaign-card{transition:border-color .2s ease, transform .15s ease, background .2s ease}
+.shop-item:hover,.mission-item:hover,.campaign-card:hover{border-color:rgba(255,170,0,.35);background:rgba(255,255,255,.05)}
+.campaign-card.active-c{box-shadow:0 0 18px rgba(255,170,0,.18)}
+#report,#newsFeed,#historyLog,#warLogList{border-radius:14px;background:rgba(0,0,0,.45)}
+.reschip{transition:transform .15s ease}
+.reschip:hover{transform:translateY(-1px)}
+</style>
+</head>
+<body>
+<div id="startOverlay">
+<canvas id="startBgCanvas"></canvas>
+<div id="startBest">🏆 Рекорд: <span id="startRecord">0</span><small>Кампания: <span id="startCampaign">—</span></small></div>
+<div id="startTitle">🌍 GLOBAL STRIKE</div>
+<div id="startSubtitle">RELEASE EDITION</div>
+<button id="startBtn">⚡ НАЧАТЬ ⚡</button>
+<div id="startCredits">Mikhail_Vlasov · 2026<br>110+ бомб · 17 маршей · 45 миссий · 12 кампаний · Лидеры · ПВО · Престиж</div>
+</div>
+<div id="introOverlay"><canvas id="fireworksCanvas"></canvas><div id="introText">ГЕНЕРАЛ, ПРИКАЗ ПОЛУЧЕН.</div></div>
+<div id="appContent">
+<div id="panel">
+<div class="resbar">
+<div class="reschip">💰<b id="resMoney">1000</b></div>
+<div class="reschip">⭐<b id="resScore">0</b></div>
+<div class="reschip">🔥<b id="resCombo">x1</b></div>
+<div class="reschip" style="color:var(--accent)">🎯<b id="resCampaign">—</b></div>
+<div class="reschip" style="color:#ff6666">🛡️<b id="resPVO">0%</b></div>
+ <div class="reschip" id="resLeaderChip" style="display:none">👤<b id="resLeader">—</b></div>
+ <div class="reschip" style="color:var(--green)">🎖️<b id="titleDisplay" style="font-size:.62rem">Новобранец</b></div>
+</div>
+<div class="tab-bar">
+<button class="tab-btn active" data-tab="tab-arsenal">🎯 Арсенал</button>
+<button class="tab-btn" data-tab="tab-stats">📊 Статус</button>
+<button class="tab-btn" data-tab="tab-music">🎵 Музыка</button>
+</div>
+<div class="tab-panel active" id="tab-arsenal">
+<div class="controls">
+<div class="ctrl-row">
+<div class="ctrl-group"><label>🎯 Боеприпас</label><select id="bombSelect"></select></div>
+<button class="btn-sec" id="randomBombBtn" style="padding:3px 8px;font-size:.65rem;align-self:flex-end">🎲 Случайная</button>
+</div>
+<div class="bomb-card"><div class="bomb-icon" id="bombIcon">💣</div><div><div class="bomb-name" id="bombName">—</div><div class="bomb-meta" id="bombMeta"></div></div></div>
+<div class="ctrl-row">
+<div class="ctrl-group"><label>🚁 Высота</label><div class="height-selector"><div class="height-btn active" data-h="g">Назем.</div><div class="height-btn" data-h="a">Возд.</div><div class="height-btn" data-h="h">Высот.</div></div></div>
+<div class="ctrl-group"><label>🎮 Сложность</label><select id="difficultySelect"><option value="easy">Лёгкая</option><option value="normal" selected>Нормальная</option><option value="hard">Тяжёлая</option><option value="realistic">Реализм</option></select></div>
+</div>
+<div class="ctrl-group"><label>🌬️ Ветер</label><div class="wind-display"><div class="wind-arrow" id="windArrow">⬆️</div><div style="flex:1;font-size:.74rem" id="windText">—</div><button id="newWindBtn" class="btn-sec" style="padding:3px 9px;font-size:.65rem">🔄</button></div></div>
+ <button class="launch-btn" id="launchBtn">🚀 ПРИЦЕЛИТЬСЯ</button>
+<div class="ctrl-row"><button class="btn-sec" id="modeAttack" style="flex:1;font-size:.7rem;border-color:var(--accent);background:rgba(255,170,0,.15)">🎯 Атака</button><button class="btn-sec" id="modeScout" style="flex:1;font-size:.7rem">🕵️ Разведка</button></div>
+<div class="score-bar"><span style="font-size:.68rem;color:#999">🏆 Очки</span><span class="score-value" id="scoreDisplay">0</span><span style="font-size:.68rem;color:#999">Рекорд: <span id="recordDisplay">0</span></span></div>
+<div class="score-bar combo-bar"><span style="font-size:.68rem">🔥 Комбо</span><span class="combo-value" id="comboDisplay">x1</span><span style="font-size:.68rem" id="comboTimer">—</span></div>
+<div class="stats-row"><span class="stat-chip">💣<span id="statTotal">0</span></span><span class="stat-chip">🎯<span id="statTargets">0</span></span><span class="stat-chip">☢️<span id="statRad">0</span></span><span class="stat-chip">🏅<span id="statAchieve">0</span></span></div>
+<div id="report"><div style="color:var(--accent);font-weight:600;margin-bottom:3px;font-size:.76rem">📋 ОТЧЁТ</div><div id="reportContent" style="color:#888;font-size:.74rem">Кликните по карте...</div></div>
+<div class="ctrl-row">
+<button class="btn-sec" id="missionsBtn" style="flex:1;font-size:.74rem">🏁 Миссии</button>
+<button class="btn-sec" id="shopBtn" style="flex:1;font-size:.74rem">🛒 Магазин</button>
+<button class="btn-sec" id="campaignBtn" style="flex:1;font-size:.74rem">⚔️ Кампания</button>
+</div>
+<div class="ctrl-row">
+<button class="btn-sec" id="leaderSelectBtn" style="flex:1;font-size:.74rem">👤 Лидер</button>
+<button class="btn-sec" id="settingsBtn" style="flex:1;font-size:.74rem">⚙️ Настройки</button>
+<button class="btn-sec" id="leaderBtn" style="flex:1;font-size:.74rem">🏆 Лидерборд</button>
+</div>
+</div>
+</div><!-- ТАБ 2: СТАТИСТИКА -->
+<div class="tab-panel" id="tab-stats">
+<div class="controls">
+<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:12px">
+<h3 style="color:var(--accent);font-size:.9rem;margin-bottom:8px">📊 Сводка</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.72rem">
+<div><span style="color:#999">Всего бомб:</span> <b id="sTotal">0</b></div>
+<div><span style="color:#999">Целей уничтожено:</span> <b id="sTargets">0</b></div>
+<div><span style="color:#999">Очков:</span> <b id="sScore" style="color:var(--accent)">0</b></div>
+<div><span style="color:#999">Денег:</span> <b id="sMoney">0</b></div>
+<div><span style="color:#999">Радиация мира:</span> <b id="sRad">0%</b></div>
+<div><span style="color:#999">Мировое комбо:</span> <b id="sCombo">x1</b></div>
+<div><span style="color:#999">Всего жертв:</span> <b id="sCasualties">0</b></div>
+<div><span style="color:#999">Достижений:</span> <b id="sAch">0</b></div>
+<div><span style="color:#999">Макс. мощность:</span> <b id="sPower">0</b></div>
+<div><span style="color:#999">Уникальных бомб:</span> <b id="sUnique">0</b></div>
+<div><span style="color:#999">Уровень ПВО:</span> <b id="sPVO">0</b></div>
+ <div><span style="color:#999">Престиж:</span> <b id="sPrestige">0</b></div>
+</div>
+</div>
+<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:10px">
+<h3 style="color:var(--accent);font-size:.82rem;margin-bottom:6px">🎒 Коллекция бомб</h3>
+<div id="bombCollection" style="display:flex;flex-wrap:wrap;gap:4px;max-height:110px;overflow-y:auto"></div>
+</div>
+<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:10px">
+<h3 style="color:var(--accent);font-size:.82rem;margin-bottom:6px">📰 Новости</h3>
+<div class="news-feed" id="newsFeed">—</div>
+</div>
+ <div style="background:rgba(0,0,0,.3);border-radius:12px;padding:10px">
+<h3 style="color:var(--accent);font-size:.82rem;margin-bottom:6px">🕒 История</h3>
+<div class="history-log" id="historyLog">—</div>
+</div>
+<div style="background:rgba(0,0,0,.3);border-radius:12px;padding:10px">
+<h3 style="color:var(--accent);font-size:.82rem;margin-bottom:6px">📜 Журнал военачальника</h3>
+<div id="warLogList" style="max-height:110px;overflow-y:auto;font-size:.64rem;line-height:1.5">—</div>
+<button class="btn-sec" id="warLogExportBtn" style="margin-top:6px;width:100%;font-size:.7rem">💾 Экспорт журнала</button>
+</div>
+<div class="ctrl-row">
+<button class="btn-sec" id="exportBtn" style="flex:1;font-size:.7rem">💾 Экспорт</button>
+<button class="btn-sec" id="importBtn" style="flex:1;font-size:.7rem">📂 Импорт</button>
+<button class="prestige-btn" id="prestigeBtn" style="flex:.7;font-size:.7rem">💀 Престиж</button>
+</div>
+</div>
+</div>
+<!-- ТАБ 3: МУЗЫКА -->
+<div class="tab-panel" id="tab-music">
+<div class="controls">
+<div class="ctrl-group">
+<label>🎵 Марш страны</label>
+<select id="marchSelect" style="font-size:.78rem"></select>
+</div>
+<div style="display:flex;gap:8px;align-items:center;">
+<button id="muteBtn" class="icon-btn" style="font-size:1.2rem">🔊</button>
+<input type="range" id="volumeSlider" min="0" max="100" value="50" style="flex:1;padding:5px">
+</div>
+<div style="background:rgba(0,0,0,.3);border-radius:10px;padding:8px;font-size:.7rem;color:#999">
+🎧 17 маршей стран · Лидеры · ПВО · Престиж · Конфликт-зоны
+</div>
+</div>
+</div>
+</div>
+<div id="map">
+ <div id="radMeter">☢️ Радиация: <b id="radLevel">0%</b> <button id="radResetBtn" title="Сбросить уровень радиации" style="margin-left:6px;background:#2a3444;border:1px solid #555;border-radius:8px;padding:2px 8px;font-size:.6rem;cursor:pointer;color:#ccc;transition:all .2s">🧹 Сбросить</button></div>
+<div id="reactBanner"></div>
+<div id="campaignBanner"></div>
+<div id="cornerControls">
+<span id="miniScore">⭐ 0</span>
+<button class="icon-btn" id="togglePanelBtn">📂</button>
+<button class="icon-btn" id="pauseBtn" title="Пауза">⏸️</button>
+</div>
+<div id="pauseOverlay"><div class="pause-box"><div style="font-size:3rem">⏸️</div><h3 style="color:var(--accent);margin:8px 0">ПАУЗА</h3><p style="font-size:.8rem;color:#aaa;margin-bottom:14px">Игра приостановлена</p><button class="btn-pri" id="pauseResumeBtn">▶️ Продолжить</button></div></div>
+<div id="targetIndicator">🎯 Цель: <span id="targetName">—</span></div>
+</div>
+</div>
+<div class="modal" id="settingsModal"><div class="modal-content">
+<h3>⚙️ Настройки</h3>
+<div class="m-field"><label>🎵 Своя музыка (URL)</label><input type="text" id="customMusicInput"></div>
+<div class="m-field"><label>🖼️ Своя заставка (URL)</label><input type="text" id="customBgInput"></div>
+<div class="m-field"><label>🌀 Ветер</label><select id="windModeSelect"><option value="dynamic">Динамический</option><option value="static">Статический</option></select></div>
+ <div class="m-field"><label>🎯 Подтверждение</label><select id="confirmModeSelect"><option value="always">Всегда</option><option value="nuke">Только ядерные</option><option value="off">Нет</option></select></div>
+ <div class="m-field"><label>🌀 ВАСЮТИНСКОЕ ЧУДО (секрет)</label><input type="range" id="vasyutinSlider" min="0" max="100" value="0" style="width:100%"><div id="vasyutinHint" style="font-size:.62rem;color:#666;margin-top:2px">Передвиньте ползунок, чтобы открыть скрытое…</div></div>
+ <div class="m-buttons"><button class="btn-sec" id="closeSettingsBtn">Отмена</button><button class="btn-pri" id="saveSettingsBtn">Сохранить</button></div>
+<p style="margin-top:8px;font-size:.65rem;color:#666">v4.0 RELEASE · Mikhail_Vlasov</p>
+</div></div>
+<div class="modal" id="missionModal"><div class="modal-content">
+<h3>🏁 Миссии <span style="font-size:.65rem;color:#999" id="missionProgress">(0/45)</span></h3>
+<div id="missionList"></div>
+</div></div>
+<div class="modal" id="shopModal"><div class="modal-content">
+<h3>🛒 Апгрейды <span style="font-size:.65rem;color:#999">💰<span id="shopMoney">0</span></span></h3>
+<div id="shopList"></div>
+</div></div>
+<div class="modal" id="campaignModal"><div class="modal-content">
+<h3>⚔️ Кампания <span style="font-size:.65rem;color:#999" id="campaignProg">(0/12)</span></h3>
+<div id="campaignList"></div>
+</div></div>
+<div class="modal" id="leaderModal"><div class="modal-content">
+<h3>🏆 Лидерборд <span style="font-size:.65rem;color:#999">топ-10</span></h3>
+<div id="leaderList"></div>
+<div class="m-buttons"><button class="btn-pri" id="clearLeaderBtn" style="background:#aa3333">🗑️ Очистить</button><button class="btn-sec" id="closeLeaderBtn">Закрыть</button></div>
+</div></div>
+<div class="modal" id="leaderSelectModal"><div class="modal-content">
+<h3>👤 Выбор лидера <span style="font-size:.65rem;color:#999">бонус к стратегии</span></h3>
+<div id="leaderSelectList"></div>
+<div class="m-buttons"><button class="btn-sec" id="closeLeaderSelectBtn">Закрыть</button></div>
+</div></div>
+<div class="modal" id="recordModal"><div class="modal-content" style="text-align:center"><h2 style="color:var(--gold)">🎉 Новый рекорд!</h2><p id="modalText" style="margin:8px 0"></p><button class="btn-pri" id="closeModalBtn">OK</button></div></div>
+<div class="modal" id="prestigeModal"><div class="modal-content" style="text-align:center;max-width:420px">
+<h2 style="color:var(--red)">💀 ПРЕСТИЖ</h2>
+<p style="margin:8px 0;font-size:.82rem;color:#aaa">Начать заново с сохранением одного апгрейда, лидера, рекорда и лидерборда.</p>
+<p style="font-size:.7rem;color:#888">Ваш престиж: <b id="prestigeModalCount" style="color:var(--gold)">0</b></p>
+<div class="m-field"><label>Сохранить апгрейд</label><select id="prestigeUpgradeSelect"></select></div>
+<div class="m-buttons"><button class="btn-sec" id="prestigeCancelBtn">Отмена</button><button class="btn-pri" id="prestigeConfirmBtn" style="background:linear-gradient(135deg,#8b0000,#4a0000)">💀 НАЧАТЬ ЗАНОВО</button></div>
+</div></div>
+<div id="achieveToast" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:4000;background:linear-gradient(135deg,#1a2230,#2a3a50);border:1px solid var(--gold);border-radius:16px;padding:12px 24px;text-align:center;visibility:hidden;opacity:0;transition:opacity .4s,visibility .4s;box-shadow:0 10px 40px rgba(0,0,0,.5);pointer-events:none">
+<div style="font-size:1.4rem;margin-bottom:4px" id="achieveIcon">🏅</div>
+<div style="font-weight:700;color:var(--gold)" id="achieveTitle">Достижение!</div>
+<div style="font-size:.78rem;color:#aaa" id="achieveDesc">—</div>
+</div>
+<div id="scaryToast" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5000;background:radial-gradient(ellipse at center,#1a0010,#000);border:2px solid var(--red);border-radius:20px;padding:24px 32px;text-align:center;visibility:hidden;opacity:0;transition:opacity .6s,visibility .6s;box-shadow:0 0 100px rgba(255,0,0,.4);pointer-events:none;max-width:400px">
+<div style="font-size:3rem;margin-bottom:8px">💀👁️💀</div>
+<div style="font-weight:900;font-size:1.4rem;color:var(--red);letter-spacing:2px">ПАЛ-ЛАИЧ ОСВОБОЖДЁН</div>
+<div style="font-size:.8rem;color:#cc6666;margin-top:6px">Потусторонняя сущность из бездны явилась в ваш мир.</div>
+<div style="font-size:.7rem;color:#aa4444;margin-top:4px">-50% стоимость · +50% радиус · +50% радиация</div>
+</div>
+<div class="modal" id="confirmOverlay"><div class="modal-content" style="text-align:center;max-width:400px"><div style="font-size:3rem" id="confirmIcon">💣</div><h3 id="confirmTitle" style="color:var(--accent);margin-bottom:6px">Подтверждение</h3><div id="confirmDetails" style="background:rgba(0,0,0,.3);border-radius:10px;padding:8px;margin:8px 0;font-size:.78rem;text-align:left"></div><div style="display:flex;gap:10px"><button class="btn-sec" id="confirmNo" style="flex:1">Отмена</button><button class="btn-pri" id="confirmYes" style="flex:1">🚀 ЗАПУСК!</button></div></div></div>
+<div class="modal" id="endingModal"><div class="modal-content" style="text-align:center;max-width:520px">
+<h2 style="color:var(--red)">💀 ЗЕМЛЯ ПОГИБЛА</h2>
+<p style="margin:10px 0;font-size:.86rem;color:#ddd;line-height:1.6">Мир обращён в пепел. Радиоактивные пустыни, вечная зима и тишина вместо городов. Человечество стёрло себя с лица планеты, глядя на термоядерные вспышки.</p>
+<div id="endStats" style="background:rgba(0,0,0,.35);border-radius:12px;padding:12px;margin:12px 0;font-size:.8rem;color:#bbb;text-align:left;line-height:1.7"></div>
+<p style="font-size:.72rem;color:#888">Секретная концовка: 100% радиации + Царь-бомба</p>
+<div class="m-buttons"><button class="btn-sec" id="endCloseBtn">Продолжить наблюдать</button></div>
+</div></div>
+<div class="modal" id="svetlovModal"><div class="modal-content" style="text-align:center;max-width:520px">
+<h2 style="color:var(--blue)">🏖️ САНЯ СВЕТЛОВ</h2>
+<img id="svetlovImg" src="sanya-svetlov.jpg" alt="Саня Светлов" style="width:100%;max-width:280px;margin:10px auto;border-radius:16px;display:block;box-shadow:0 10px 40px rgba(0,0,0,.6)">
+<p style="margin:8px 0;font-size:.84rem;color:#ddd;line-height:1.6" id="svetlovText"></p>
+<div class="m-buttons"><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn-pri" id="svetlovYes" style="flex:1">☀️ Да, отпуск!</button><button class="btn-sec" id="svetlovNo" style="flex:1">Нет, я хочу домой</button></div></div>
+</div></div>
+    <audio id="marchAudio" preload="auto"></audio>
+    <script src="leaflet.js"></script>
+<script>(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+// ========== DATA ==========
+const BOMBS=(()=>{const b=[];const add=(id,nm,co,cat,ty,p,pl,br,ra,cep,co2,ic,de)=>{b.push({id,name:nm,country:co,category:cat,type:ty,power:p,powerLabel:pl,blastRadius:br,radiation:ra,cep,cost:co2,icon:ic,desc:de});};
+add('f1','ФАБ-500','Россия','Обычные','Фугасная',.0005,'500 кг',.08,0,50,100,'💣',1);add('f2','MOAB','США','Обычные','Термобарическая',.011,'11 т',.3,0,20,500,'💥',1);add('f3','РБК-500','Россия','Обычные','Кассетная',.0003,'300 кг',.15,0,80,150,'🧨',1);add('f4','BLU-82','США','Обычные','Объёмного взрыва',.006,'6 т',.35,0,30,400,'💥',1);add('f5','Тип 92','Япония','Обычные','Авиабомба',.0001,'100 кг',.05,0,100,50,'💣',1);add('f6','Hafr-2','Пакистан','Обычные','Управляемая',.0008,'800 кг',.1,0,25,200,'🚀',1);add('f7','LS-6','Китай','Обычные','Планирующая',.0005,'500 кг',.08,0,20,150,'🛩️',1);add('f8','AASM','Франция','Обычные','Модульная',.00025,'250 кг',.06,0,15,120,'🎯',1);add('f9','JDAM','США','Обычные','Управляемая',.0009,'900 кг',.12,0,10,300,'🎯',1);add('f10','Торнадо-Г','Россия','Обычные','РСЗО',.0004,'400 кг',.07,0,60,80,'🌪️',1);add('f11','Mark 84','США','Обычные','Фугасная',.0009,'900 кг',.11,0,20,180,'💣',1);add('f12','BLU-109','США','Обычные','Проникающая',.0009,'900 кг',.09,0,10,250,'🏗️',1);add('f13','ФАБ-3000','Россия','Обычные','Фугасная',.003,'3 т',.16,0,45,280,'💣',1);add('f14','БетАБ-500','Россия','Обычные','Бетонобойная',.0007,'500 кг',.07,0,15,220,'🧱',1);add('f15','KAB-1500','Россия','Обычные','Управляемая',.0015,'1.5 т',.13,0,12,320,'🎯',1);add('c1','Зарин','Сирия','Химические','Нервно-паралитический',.0002,'200 кг',.2,.1,40,200,'☠️',1);add('c2','VX','США','Химические','Нервно-паралитический',.00015,'150 кг',.25,.15,30,350,'🧪',1);add('c3','Иприт','Германия','Химические','Кожно-нарывной',.0003,'300 кг',.18,.05,50,120,'🌫️',1);add('c4','Хлор','Ирак','Химические','Удушающий',.0001,'100 кг',.12,.02,60,80,'💨',1);add('c5','Фосген','Франция','Химические','Удушающий',.00018,'180 кг',.14,.03,45,90,'🌬️',1);add('c6','Табун','Германия','Химические','Нервный газ',.00022,'220 кг',.22,.12,35,180,'⚗️',1);add('c7','Новичок','Россия','Химические','Нервный агент',.0003,'300 кг',.3,.2,25,500,'🧫',1);add('c8','Зоман','Германия','Химические','Нервный газ',.0002,'200 кг',.19,.1,35,150,'☣️',1);add('b1','Сибирская язва','США','Биологические','Бактерия',.0001,'100 кг',.3,0,50,300,'🦠',1);add('b2','Ботулотоксин','Россия','Биологические','Токсин',.0001,'50 кг',.35,0,30,400,'🧫',1);add('b3','Чума','Япония','Биологические','Бактерия',.0001,'80 кг',.28,0,45,200,'🐀',1);add('b4','Оспа','Китай','Биологические','Вирус',.0001,'60 кг',.32,0,40,250,'🧬',1);add('b5','Туляремия','США','Биологические','Бактерия',.0001,'90 кг',.25,0,40,150,'🦗',1);add('b6','Гем. лихорадка','СССР','Биологические','Вирус',.0001,'70 кг',.3,0,35,280,'🩸',1);add('b7','Рицин','США','Биологические','Токсин',.0001,'30 кг',.22,0,25,350,'🌿',1);add('b8','Стаф. энтеротоксин','СССР','Биологические','Токсин',.0001,'40 кг',.2,0,30,220,'🧪',1);add('n1','Малыш','США','Ядерные','Урановая',15,'15 кт',2.0,8,100,1000,'☢️',1);add('n2','Толстяк','США','Ядерные','Плутониевая',21,'21 кт',2.3,10,90,1100,'☢️',1);add('n3','РДС-1','СССР','Ядерные','Плутониевая',22,'22 кт',2.4,10,85,1050,'☢️',1);add('n4','Ураган','Великобритания','Ядерные','Урановая',25,'25 кт',2.5,11,80,1150,'☢️',1);add('n5','Синяя лисица','Франция','Ядерные','Плутониевая',70,'70 кт',3.2,15,70,1300,'☢️',1);add('n6','Чагай-1','Пакистан','Ядерные','Имплозивная',40,'40 кт',2.9,13,75,1200,'☢️',1);add('n7','Улыбка Будды','Индия','Ядерные','Имплозивная',12,'12 кт',1.9,7,90,950,'☢️',1);add('n8','Хвасон-14','Сев.Корея','Ядерные','Термоядерная',150,'150 кт',4.0,20,60,1500,'☢️',1);add('n9','B61-12','США','Ядерные','Управляемая',50,'50 кт',3.0,12,15,1400,'🎯',1);add('n10','W76-2','США','Ядерные','Малая мощность',5,'5 кт',1.2,4,20,800,'☢️',1);add('n11','Сармат','Россия','Ядерные','Тяжёлая МБР',100,'100 кт',3.5,18,25,2900,'🚀',1);add('n12','Авангард','Россия','Ядерные','Гиперзвуковая',50,'50 кт',3.1,14,10,3100,'⚡',1);add('t1','Царь-бомба','СССР','Термоядерные','Водородная',50000,'50 Мт',25,100,100,5000,'🌞',1);add('t2','Кастл Браво','США','Термоядерные','Водородная',15000,'15 Мт',18,80,80,4000,'🌞',1);add('t3','Теллер-Улам','США','Термоядерные','Двухступенчатая',9000,'9 Мт',15,70,70,3800,'🌞',1);add('t4','Титан II','США','Термоядерные','Боеголовка',9000,'9 Мт',15,70,60,3500,'🚀',1);add('t5','Р-36орб','СССР','Термоядерные','Орбитальная',20000,'20 Мт',20,90,65,4500,'🛰️',1);add('t6','Красная звезда','Китай','Термоядерные','Водородная',4000,'4 Мт',12,60,75,3300,'🌞',1);add('t7','B53','США','Термоядерные','Бункерная',9000,'9 Мт',14,65,50,3700,'💣',1);add('t8','Р-12','СССР','Термоядерные','БРСД',2300,'2.3 Мт',10,50,55,3200,'🚀',1);add('t9','МК-41','США','Термоядерные','Термоядерная',25000,'25 Мт',22,95,60,4800,'☢️',1);add('t10','Р-7','СССР','Термоядерные','МБР',2800,'2.8 Мт',11,55,50,3400,'🚀',1);add('e1','Нейтронная бомба','США','Экспериментальные','Нейтронная',1,'1 кт',1.5,50,30,2000,'⚡',1);add('e2','Кобальтовая бомба','СССР','Экспериментальные','Солёная',50,'50 кт',3.0,200,50,2500,'🧂',1);add('e3','Атомная пушка M65','США','Экспериментальные','Артиллерийская',.1,'100 т',.5,5,40,700,'🎯',1);add('e4','Тополь-М','Россия','Экспериментальные','МБР',550,'550 кт',5.5,30,20,2800,'🚀',1);add('e5','Минитмен III','США','Экспериментальные','МБР',350,'350 кт',4.5,25,15,2600,'🚀',1);add('e6','B61','США','Экспериментальные','Многоцелевая',340,'340 кт',4.2,24,20,2400,'💣',1);add('e7','Грязная бомба','США','Экспериментальные','Радиологическая',.5,'500 кг',.3,80,50,1500,'☢️',1);add('e8','ЭМИ-бомба','США','Экспериментальные','ЭМИ',1,'1 кт',5.0,5,30,1800,'📡',1);add('e9','Психотронное','Россия','Экспериментальные','Пси-воздействие',.001,'—',.05,0,100,600,'🧠',1);add('e10','Климатическое','Китай','Экспериментальные','Засев облаков',.01,'—',1.0,0,200,900,'🌧️',1);add('e11','Царь-Торпеда','Россия','Экспериментальные','Ядерная торпеда',100,'100 Мт',35,120,50,5500,'🐙',1);add('e12','Орбитальная пушка','США','Экспериментальные','Кинетическая',.01,'10 т',.02,0,5,3000,'🛸',1);
+add('u1','Лазер','США','Фантастика','Кинетический',.5,'500 кг',.4,0,2,2000,'🔆',1);add('u2','Метеорит','Космос','Фантастика','Небесное тело',5,'5 кт',1.5,5,200,1500,'☄️',1);add('u3','Чёрная дыра','ЛАБ','Фантастика','Гравитационная',50,'50 кт',1.0,30,50,4000,'🕳️',1);add('u4','Антиматерия','ЦЕРН','Фантастика','Аннигиляция',1000,'1 Мт',10,60,30,6000,'⚛️',1);add('u5','Цунами','США','Фантастика','Сейсмическая',10,'10 кт',8.0,15,150,3500,'🌊',1);add('u6','Вулкан','Россия','Фантастика','Геологическая',20,'20 кт',6.0,20,120,3800,'🌋',1);add('u7','Замораживатель','Антарктида','Фантастика','Криогенная',2,'2 кт',3.0,10,40,2500,'❄️',1);add('u8','Нано-рой','Швейцария','Фантастика','Нанотехнология',.001,'—',.5,5,50,3000,'🐜',1);add('u9','Портальная','ЛАБ','Фантастика','Пространственная',.5,'—',1.2,20,60,4500,'🌀',1);add('u10','Грав. волна','Космос','Фантастика','Пространство-время',500,'500 кт',7.0,40,80,5000,'🌌',1);add('u11','Фотонная','Звезда','Фантастика','Энергетическая',100,'100 кт',5.0,25,10,3500,'💫',1);add('u12','Квантовый','ЛАБ','Фантастика','Квантовая',3000,'3 Мт',15,70,40,7000,'🔮',1);
+return b;})();
+const CITIES=[{name:'Москва',coords:[55.7558,37.6173],country:'Россия',pop:12e6,continent:'Европа'},{name:'Санкт-Петербург',coords:[59.9343,30.3351],country:'Россия',pop:5.4e6,continent:'Европа'},{name:'Новосибирск',coords:[55.0302,82.9204],country:'Россия',pop:1.6e6,continent:'Азия'},{name:'Екатеринбург',coords:[56.8389,60.6057],country:'Россия',pop:1.5e6,continent:'Азия'},{name:'Владивосток',coords:[43.1155,131.8855],country:'Россия',pop:.6e6,continent:'Азия'},{name:'Казань',coords:[55.7963,49.1088],country:'Россия',pop:1.3e6,continent:'Европа'},{name:'Волгоград',coords:[48.7080,44.5133],country:'Россия',pop:1e6,continent:'Европа'},{name:'Сочи',coords:[43.6028,39.7343],country:'Россия',pop:.4e6,continent:'Европа'},{name:'Киев',coords:[50.4501,30.5234],country:'Украина',pop:2.8e6,continent:'Европа'},{name:'Нью-Йорк',coords:[40.7128,-74.0060],country:'США',pop:8.4e6,continent:'Америка'},{name:'Вашингтон',coords:[38.9072,-77.0369],country:'США',pop:.7e6,continent:'Америка'},{name:'Лос-Анджелес',coords:[34.0522,-118.2437],country:'США',pop:3.9e6,continent:'Америка'},{name:'Чикаго',coords:[41.8781,-87.6298],country:'США',pop:2.7e6,continent:'Америка'},{name:'Хьюстон',coords:[29.7604,-95.3698],country:'США',pop:2.3e6,continent:'Америка'},{name:'Сан-Франциско',coords:[37.7749,-122.4194],country:'США',pop:.9e6,continent:'Америка'},{name:'Лас-Вегас',coords:[36.1699,-115.1398],country:'США',pop:.6e6,continent:'Америка'},{name:'Лондон',coords:[51.5074,-.1278],country:'Великобритания',pop:8.9e6,continent:'Европа'},{name:'Париж',coords:[48.8566,2.3522],country:'Франция',pop:2.2e6,continent:'Европа'},{name:'Берлин',coords:[52.5200,13.4050],country:'Германия',pop:3.7e6,continent:'Европа'},{name:'Рим',coords:[41.9028,12.4964],country:'Италия',pop:2.9e6,continent:'Европа'},{name:'Мадрид',coords:[40.4168,-3.7038],country:'Испания',pop:3.2e6,continent:'Европа'},{name:'Барселона',coords:[41.3874,2.1686],country:'Испания',pop:1.6e6,continent:'Европа'},{name:'Прага',coords:[50.0755,14.4378],country:'Чехия',pop:1.3e6,continent:'Европа'},{name:'Варшава',coords:[52.2297,21.0122],country:'Польша',pop:1.8e6,continent:'Европа'},{name:'Пекин',coords:[39.9042,116.4074],country:'Китай',pop:21.5e6,continent:'Азия'},{name:'Шанхай',coords:[31.2304,121.4737],country:'Китай',pop:24.9e6,continent:'Азия'},{name:'Токио',coords:[35.6762,139.6503],country:'Япония',pop:13.9e6,continent:'Азия'},{name:'Осака',coords:[34.6937,135.5023],country:'Япония',pop:2.7e6,continent:'Азия'},{name:'Сеул',coords:[37.5665,126.9780],country:'Южная Корея',pop:9.7e6,continent:'Азия'},{name:'Дели',coords:[28.6139,77.2090],country:'Индия',pop:19e6,continent:'Азия'},{name:'Мумбаи',coords:[19.0760,72.8777],country:'Индия',pop:12.5e6,continent:'Азия'},{name:'Каир',coords:[30.0444,31.2357],country:'Египет',pop:9.5e6,continent:'Африка'},{name:'Стамбул',coords:[41.0082,28.9784],country:'Турция',pop:15.5e6,continent:'Европа'}];
+const PLANTS=[{name:'Чернобыль',coords:[51.3892,30.0991],country:'Украина'},{name:'Фукусима',coords:[37.4215,141.0326],country:'Япония'},{name:'Три-Майл-Айленд',coords:[40.1514,-76.7249],country:'США'},{name:'Козлодуй',coords:[43.7459,23.7666],country:'Болгария'},{name:'Запорожская АЭС',coords:[47.5112,34.5855],country:'Украина'},{name:'Курская АЭС',coords:[51.6770,35.6028],country:'Россия'},{name:'Балаковская АЭС',coords:[51.9688,47.6227],country:'Россия'},{name:'Севастополь',coords:[44.6167,33.5256],country:'Россия'},{name:'Бушер',coords:[28.8288,50.8855],country:'Иран'}];
+const CONFLICT_ZONES=[
+{name:'Донбасс',coords:[48.0,37.8],desc:'Зона активных боевых действий'},
+{name:'Газа',coords:[31.5,34.5],desc:'Зона конфликта'},
+{name:'Запорожье',coords:[47.5,35.0],desc:'Линия фронта'},
+{name:'Харьков',coords:[50.0,36.5],desc:'Зона обстрелов'},
+{name:'Курск',coords:[51.7,36.2],desc:'Приграничный район'},
+{name:'Тайвань',coords:[25.0,121.5],desc:'Зона напряжённости'},
+{name:'Судан',coords:[15.5,32.5],desc:'Гражданская война'},
+{name:'Мьянма',coords:[22.0,96.0],desc:'Военный конфликт'},
+];
+const MARCHES=[
+{id:'ru',name:'🇷🇺 Россия',url:'https://upload.wikimedia.org/wikipedia/commons/4/41/National_Anthem_of_Russia_%282000%29%2C_instrumental%2C_one_verse.ogg',local:'music-ru.ogg'},
+{id:'us',name:'🇺🇸 США',url:'https://upload.wikimedia.org/wikipedia/commons/5/59/The_Stars_and_Stripes_Forever_-_U.S._Navy_Band.ogg',local:'music-us.ogg'},
+{id:'fr',name:'🇫🇷 Франция',url:'https://upload.wikimedia.org/wikipedia/commons/3/3a/Francia.ogg',local:'music-fr.ogg'},
+{id:'uk',name:'🇬🇧 Великобритания',url:'https://upload.wikimedia.org/wikipedia/commons/b/ba/God_Save_the_King_-_Alan_Turner.mp3',local:'music-uk.oga'},
+{id:'de',name:'🇩🇪 Германия',url:'https://upload.wikimedia.org/wikipedia/commons/a/a6/National_Anthem_of_Germany.ogg',local:'music-de.ogg'},
+];
+const UPGRADES=[
+{id:'acc',name:'🎯 Точечность',desc:'Снижает CEP',base:200,grow:1.6,max:5,per:'-5%/ур.'},
+{id:'pow',name:'💪 Усиленный заряд',desc:'Радиус взрыва +8%',base:250,grow:1.6,max:5,per:'+8%/ур.'},
+{id:'rad',name:'🛡️ Радиационная защита',desc:'-15% рост радиации',base:300,grow:1.5,max:5,per:'-15%/ур.'},
+{id:'cash',name:'🏦 Военная экономика',desc:'+50$/10с',base:400,grow:1.8,max:5,per:'+50$/ур.'},
+{id:'combo',name:'⏱️ Комбо-окно',desc:'+3 сек на комбо',base:350,grow:1.7,max:5,per:'+3с/ур.'},
+{id:'score',name:'📈 Аналитический центр',desc:'+10% очки',base:500,grow:1.9,max:5,per:'+10%/ур.'},
+{id:'pvo',name:'🛡️ ПВО',desc:'Перехват бомб',base:500,grow:1.7,max:5,per:'+15%/ур.'},
+];const MISSIONS=[
+{id:'m1',n:'Первая кровь',d:'Запустите 1 бомбу',t:1,ty:'launch',r:100},{id:'m2',n:'Новичок',d:'10 бомб',t:10,ty:'launch',r:200},{id:'m3',n:'Ветеран',d:'50 бомб',t:50,ty:'launch',r:500},{id:'m4',n:'Легенда',d:'100 бомб',t:100,ty:'launch',r:1000},{id:'m5',n:'Бог войны',d:'250 бомб',t:250,ty:'launch',r:2500},{id:'m6',n:'Меткий',d:'5 целей',t:5,ty:'target',r:300},{id:'m7',n:'Охотник',d:'20 целей',t:20,ty:'target',r:800},{id:'m8',n:'Завоеватель',d:'50 целей',t:50,ty:'target',r:2000},{id:'m9',n:'Ядерная эра',d:'1 ядерную',t:1,ty:'nuke',r:300},{id:'m10',n:'Арсенал',d:'10 ядерных',t:10,ty:'nuke',r:900},{id:'m11',n:'Химическое оружие',d:'5 химических',t:5,ty:'chem',r:500},{id:'m12',n:'Биологическая опасность',d:'5 биологических',t:5,ty:'bio',r:500},{id:'m13',n:'500 очков',t:500,ty:'score',r:300},{id:'m14',n:'1000 очков',t:1000,ty:'score',r:700},{id:'m15',n:'5000 очков',t:5000,ty:'score',r:2000},{id:'m16',n:'10000 очков',t:10000,ty:'score',r:4000},{id:'m17',n:'Комбо x5',t:5,ty:'combo',r:400},{id:'m18',n:'Комбо x10',t:10,ty:'combo',r:1000},{id:'m19',n:'Комбо x20',t:20,ty:'combo',r:2500},{id:'m20',n:'Заражение 25%',t:25,ty:'rad',r:800},{id:'m21',n:'Богач 5000',t:5000,ty:'money',r:500},{id:'m22',n:'Магнат 20000',t:20000,ty:'money',r:2000},{id:'m23',n:'Термоядерный 5',t:5,ty:'thermo',r:1200},{id:'m24',n:'Шторм',d:'Ветер >25 м/с',t:1,ty:'wind',r:300},{id:'m25',n:'Высотный 10',t:10,ty:'high',r:700},{id:'m26',n:'Воздушный 10',t:10,ty:'air',r:600},{id:'m27',n:'Апгрейды x3',t:3,ty:'shop',r:300},{id:'m28',n:'Инвестор x10',t:10,ty:'shop',r:1200},{id:'m29',n:'Торговец 10000 spend',t:10000,ty:'spend',r:1500},{id:'m30',n:'Уникальных 30',t:30,ty:'unique',r:2000},{id:'m31',n:'Уникальных 50',t:50,ty:'unique',r:3000},{id:'m32',n:'10 млн жертв',t:10e6,ty:'casualties',r:4000},{id:'m33',n:'Чернобыль 2.0',d:'Уничтожить АЭС',t:1,ty:'plant',r:1000},{id:'m34',n:'Химик',d:'Все хим. бомбы',t:8,ty:'chemAll',r:1500},{id:'m35',n:'Фантаст',d:'Бомбу фантастику',t:1,ty:'fantasy',r:1500},{id:'m36',n:'Царь-бомба',d:'Запустите Царь-бомбу',t:1,ty:'bomb_t1',r:2000},{id:'m37',n:'Глобалист',d:'Города 3 континентов',t:3,ty:'cont',r:1000},{id:'m38',n:'Снайпер',d:'5 точных попаданий',t:5,ty:'precise',r:800},{id:'m39',n:'Падение Москвы',d:'Уничтожить Москву',t:1,ty:'city_msk',r:1500},{id:'m40',n:'Азиатский тигр',d:'Уничтожить 2 города Азии',t:2,ty:'city_asia',r:1200},{id:'m41',n:'Европейский тур',d:'Уничтожить 2 города Европы',t:2,ty:'city_eu',r:1200},{id:'m42',n:'Точный удар',d:'10 точных попаданий',t:10,ty:'precise',r:1500},{id:'m43',n:'Цепная реакция',d:'5 точных подряд',t:5,ty:'accChain',r:1000},{id:'m44',n:'Тень Чернобыля',d:'Уничтожить 3 АЭС',t:3,ty:'plant',r:2000},{id:'m45',n:'Зона конфликта',d:'Попасть в зону конфликта',t:1,ty:'conflict',r:1000},
+];
+for(let i=0;i<MISSIONS.length;i++){const m=MISSIONS[i];if(!m.n)m.n={launch:'Бомбардировщик',target:'Цель',score:'Очки',combo:'Комбо',rad:'Радиация',money:'Деньги',thermo:'Термояд',wind:'Ветер',high:'Высота',air:'Воздух',shop:'Магазин',spend:'Траты',unique:'Коллекция',casualties:'Жертвы',plant:'АЭС',chemAll:'Химик',fantasy:'Фантастика',bomb_t1:'Гигант',cont:'География',accChain:'Точность',city_msk:'Москва',city_asia:'Азия',city_eu:'Европа',precise:'Прецизионный',conflict:'Конфликт'}[m.ty]||'Миссия';if(!m.d)m.d=`${m.t} ${m.ty}`;}
+const ACHIEVEMENTS=[
+{id:'a1',n:'Первый удар',d:'Первая бомба',ic:'💥',ch:()=>st.totalBombs>=1},{id:'a2',n:'Десятка',d:'10 бомб',ic:'💣',ch:()=>st.totalBombs>=10},{id:'a3',n:'Полсотни',d:'50 бомб',ic:'💣',ch:()=>st.totalBombs>=50},{id:'a4',n:'Сотня',d:'100 бомб',ic:'💯',ch:()=>st.totalBombs>=100},{id:'a5',n:'Меткий',d:'5 целей',ic:'🎯',ch:()=>st.targetsHit>=5},{id:'a6',n:'Охотник',d:'20 целей',ic:'🎯',ch:()=>st.targetsHit>=20},{id:'a7',n:'Завоеватель',d:'50 целей',ic:'🏆',ch:()=>st.targetsHit>=50},{id:'a8',n:'Заражение',d:'10 радиоактивных',ic:'☢️',ch:()=>st.radBombs>=10},{id:'a9',n:'Гигант',d:'Царь-бомба',ic:'🌞',ch:()=>usedBombIds.has('t1')},{id:'a10',n:'500 очков',ic:'⭐',ch:()=>score>=500},{id:'a11',n:'Тысяча',ic:'⭐',ch:()=>score>=1000},{id:'a12',n:'Легенда',ic:'👑',ch:()=>score>=5000},{id:'a13',n:'Химик',ic:'☠️',ch:()=>BOMBS.filter(x=>x.category==='Химические').every(x=>usedBombIds.has(x.id))},{id:'a14',n:'Ядерная эра',ic:'☢️',ch:()=>BOMBS.filter(x=>x.category==='Ядерные').some(x=>usedBombIds.has(x.id))},{id:'a15',n:'Ветреный',ic:'🌪️',ch:()=>wind.speed>25},{id:'a16',n:'Комбо-мастер',ic:'🔥',ch:()=>combo>=10},{id:'a17',n:'Богач',ic:'💰',ch:()=>money>=10000},{id:'a18',n:'Апокалипсис',ic:'🌍',ch:()=>globalRad>=100},{id:'a19',n:'Фантаст',ic:'🔮',ch:()=>BOMBS.filter(x=>x.category==='Фантастика').some(x=>usedBombIds.has(x.id))},{id:'a20',n:'Сверхдержава',ic:'🌞',ch:()=>st.maxPower>=50000},{id:'a21',n:'Тень лидера',ic:'👤',ch:()=>leaderId!==null},{id:'a22',n:'ПВО-инженер',ic:'🛡️',ch:()=>pvoLevel>=3},{id:'a23',n:'Престиж 1',ic:'💀',ch:()=>prestigeCount>=1},{id:'a24',n:'Потусторонний',ic:'👁️',ch:()=>pallaichUnlocked}];
+const CAMPAIGNS=[
+{id:'c1',n:'Операция Удар',d:'Набрать 1000 очков любыми бомбами',goal:()=>score>=1000,reward:500},
+{id:'c2',n:'Холодная война',d:'Запустить 5 ядерных бомб',goal:()=>BOMBS.filter(x=>x.category==='Ядерные'&&usedBombIds.has(x.id)).length>=5,reward:800},
+{id:'c3',n:'Эскалация',d:'Достигнуть 25% радиации',goal:()=>globalRad>=25,reward:600},
+{id:'c4',n:'Термоядерный рубеж',d:'Запустить 3 термоядерные бомбы',goal:()=>BOMBS.filter(x=>x.category==='Термоядерные'&&usedBombIds.has(x.id)).length>=3,reward:1200},
+{id:'c5',n:'Мировая война',d:'Уничтожить 15 целей',goal:()=>st.targetsHit>=15,reward:1000},
+{id:'c6',n:'Химический туман',d:'Использовать 5 химических бомб',goal:()=>BOMBS.filter(x=>x.category==='Химические'&&usedBombIds.has(x.id)).length>=5,reward:700},
+{id:'c7',n:'Коллекционер',d:'Использовать 30 разных бомб',goal:()=>usedBombIds.size>=30,reward:1500},
+{id:'c8',n:'Глобальное заражение',d:'75% мировой радиации',goal:()=>globalRad>=75,reward:2500},
+{id:'c9',n:'Высшая лига',d:'Набрать 10000 очков',goal:()=>score>=10000,reward:3000},
+{id:'c10',n:'Смерть с небес',d:'10 бомб с высотного подрыва',goal:()=>(st.highCount||0)>=10,reward:800},
+{id:'c11',n:'Новая эра',d:'Использовать 50 разных бомб',goal:()=>usedBombIds.size>=50,reward:5000},
+{id:'c12',n:'Ядерный апокалипсис',d:'100% радиации + Царь-бомба',goal:()=>globalRad>=100&&usedBombIds.has('t1'),reward:10000},
+];
+const LEADERS=[
+{id:'putin',name:'Владимир Путин',country:'Россия',unlocked:true,bonus:'-20% стоимость всех бомб',img:'https://upload.wikimedia.org/wikipedia/commons/3/34/Vladimir_Putin_-_2012.jpg',emoji:'🇷🇺'},
+{id:'trump',name:'Дональд Трамп',country:'США',unlocked:true,bonus:'+15% очки за ядерные бомбы',img:'https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg',emoji:'🇺🇸'},
+{id:'macron',name:'Эмманюэль Макрон',country:'Франция',unlocked:true,bonus:'+10% точность (снижение CEP всех бомб)',img:'https://upload.wikimedia.org/wikipedia/commons/f/fd/Emmanuel_Macron_portrait_%28cropped%29.jpg',emoji:'🇫🇷'},
+{id:'scholz',name:'Олаф Шольц',country:'Германия',unlocked:true,bonus:'+20% пассивный доход',img:'https://upload.wikimedia.org/wikipedia/commons/b/bd/Olaf_Scholz_2025.jpg',emoji:'🇩🇪'},
+{id:'zelensky',name:'Владимир Зеленский',country:'Украина',unlocked:true,bonus:'+25% к радиусу взрыва',img:'https://upload.wikimedia.org/wikipedia/commons/9/9c/Volodymyr_Zelensky_Official_portrait.jpg',emoji:'🇺🇦'},
+];
+const PALLAICH_IMG='pal-laich.jpg';// ========== STATE ==========
+let currentBomb=BOMBS[0],wind={speed:12,direction:45};
+let map=null,blastLayers=[],falloutLayers=[],detonationHeight='g';
+let score=0,money=parseInt(localStorage.getItem('gsMoney'))||1000,record=parseInt(localStorage.getItem('gsRecord'))||0;
+let combo=1,comboTimer=0,comboInterval=null,lastHit=false,accChain=0;
+let globalRad=parseFloat(localStorage.getItem('gsRad'))||0;
+let history=(()=>{try{return JSON.parse(localStorage.getItem('gsHist'))||[]}catch(e){return []}})();
+let gameStarted=false,customMusicUrl=localStorage.getItem('gsCM')||'',customBgUrl=localStorage.getItem('gsCB')||'';
+let windMode=localStorage.getItem('gsWM')||'dynamic',confirmMode=localStorage.getItem('gsCF')||'always',difficulty='normal';
+let currentMarchIdx=0,isMuted=false,passiveIncomeInterval=null,reactInterval=null,musicFailCount=0,paused=false,pauseBtn=null,pauseOverlay=null;
+let usedBombIds=new Set((()=>{try{return JSON.parse(localStorage.getItem('gsUB'))||[]}catch(e){return []}})());
+let st=(()=>{try{const s=JSON.parse(localStorage.getItem('gsST'))||{};return Object.assign({totalBombs:0,targetsHit:0,radBombs:0,radCount:0,maxScore:0,maxPower:0,casualties:0,continents:{},spend:0,shopCount:0,preciseHits:0,highCount:0,airCount:0,plantsHit:0,nukeChain:0},s)}catch(e){return {totalBombs:0,targetsHit:0,radBombs:0,radCount:0,maxScore:0,maxPower:0,casualties:0,continents:{},spend:0,shopCount:0,preciseHits:0,highCount:0,airCount:0,plantsHit:0,nukeChain:0}}})();
+let ach=(()=>{try{return JSON.parse(localStorage.getItem('gsAch'))||[]}catch(e){return []}})();
+let doneMissions=(()=>{try{return JSON.parse(localStorage.getItem('gsMis'))||[]}catch(e){return []}})();
+let doneCampaigns=(()=>{try{return JSON.parse(localStorage.getItem('gsCamp'))||[]}catch(e){return []}})();
+let upgrades=(()=>{try{return JSON.parse(localStorage.getItem('gsUp'))||{}}catch(e){return {}}})();
+let leaderboard=(()=>{try{return JSON.parse(localStorage.getItem('gsLB'))||[]}catch(e){return []}})();
+let pvoLevel=parseInt(localStorage.getItem('gsPVO'))||0;
+let leaderId=localStorage.getItem('gsLeader')||null;
+let pallaichUnlocked=localStorage.getItem('gsPLUnlock')==='1'||false;
+let nikitaUnlocked=localStorage.getItem('gsNikUnlock')==='1'||false;
+let glyphUnlocked=localStorage.getItem('gsGlyUnlock')==='1'||false;
+let t900Unlocked=localStorage.getItem('gsT9Unlock')==='1'||false;
+let albertUnlocked=localStorage.getItem('gsAlbUnlock')==='1'||false;
+let altuhaUnlocked=localStorage.getItem('gsAltUnlock')==='1'||false;
+let prestigeCount=parseInt(localStorage.getItem('gsPrestige'))||0;
+let destroyedCityNames=new Set((()=>{try{return JSON.parse(localStorage.getItem('gsDC'))||[]}catch(e){return []}})());
+let news=[],pendingLaunch=null,dynamicWindInterval=null,worldNewsInterval=null;
+let warLog=(()=>{try{return JSON.parse(localStorage.getItem('gsWarLog'))||[]}catch(e){return []}})();
+let targetPoint=null,targetLayer=null,targetIsPlant=false;
+let mapDarkness=0;
+let startOverlay,introOverlay,appContent,marchAudio;
+let leaderCostBonus=1,leaderNukeBonus=1,leaderCEPBonus=1,leaderIncomeBonus=1,leaderRadiusBonus=1;// ========== HELPERS ==========
+function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function saveAll(){localStorage.setItem('gsMoney',money);localStorage.setItem('gsRecord',record);localStorage.setItem('gsRad',globalRad);localStorage.setItem('gsUB',JSON.stringify([...usedBombIds]));localStorage.setItem('gsST',JSON.stringify(st));localStorage.setItem('gsAch',JSON.stringify(ach));localStorage.setItem('gsMis',JSON.stringify(doneMissions));localStorage.setItem('gsCamp',JSON.stringify(doneCampaigns));localStorage.setItem('gsUp',JSON.stringify(upgrades));localStorage.setItem('gsPVO',pvoLevel);localStorage.setItem('gsPLUnlock',pallaichUnlocked?'1':'0');localStorage.setItem('gsNikUnlock',nikitaUnlocked?'1':'0');localStorage.setItem('gsGlyUnlock',glyphUnlocked?'1':'0');localStorage.setItem('gsT9Unlock',t900Unlocked?'1':'0');localStorage.setItem('gsAlbUnlock',albertUnlocked?'1':'0');localStorage.setItem('gsAltUnlock',altuhaUnlocked?'1':'0');localStorage.setItem('gsPrestige',prestigeCount);localStorage.setItem('gsDC',JSON.stringify([...destroyedCityNames]));if(leaderId)localStorage.setItem('gsLeader',leaderId)}
+function addNews(t,c){news.unshift({text:t,time:new Date().toLocaleTimeString(),color:c||''});if(news.length>15)news.pop();renderNews();}
+function addWarLog(type,title,detail){warLog.unshift({type,title,detail:detail||'',date:new Date().toLocaleDateString(),time:new Date().toLocaleTimeString()});if(warLog.length>60)warLog.pop();localStorage.setItem('gsWarLog',JSON.stringify(warLog));}
+let lastSay=0;
+function say(text){try{const u=new(window.SpeechSynthesis||window.webkitSpeechSynthesis)();if(!u)return;u.cancel();const s=new SpeechSynthesisUtterance(text);s.lang='ru-RU';s.rate=1;s.pitch=.9;u.speak(s)}catch(e){}}
+function generalCalls(){const phrases=['Генерал, приказ получен. Цели загружены.','Арсенал готов. Пусть небо падёт.','Вперёд, генерал. Мир ждёт вашего решения.','Докладываю: системы наведены. Жду команды.'];say(phrases[Math.floor(Math.random()*phrases.length)])}
+function playExplosion(p){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const d=Math.min(2.5,.3+p*.3);const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(110,ac.currentTime);o.frequency.exponentialRampToValueAtTime(14,ac.currentTime+d);const g=ac.createGain();g.gain.setValueAtTime(.75,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function playWhistle(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.type='sine';o.frequency.setValueAtTime(900,ac.currentTime);o.frequency.exponentialRampToValueAtTime(180,ac.currentTime+1.4);const g=ac.createGain();g.gain.setValueAtTime(.3,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+1.4);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+1.4)}catch(e){}}
+function playChaChing(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();[1318,1760].forEach((f,i)=>{const o=ac.createOscillator();o.type='triangle';o.frequency.value=f;const g=ac.createGain();const t=ac.currentTime+i*.12;g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.3)})}catch(e){}}
+function playHit(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.type='square';o.frequency.setValueAtTime(320,ac.currentTime);o.frequency.exponentialRampToValueAtTime(90,ac.currentTime+.25);const g=ac.createGain();g.gain.setValueAtTime(.18,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.3);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.32)}catch(e){}}
+function playClick(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.type='sine';o.frequency.value=420;const g=ac.createGain();g.gain.setValueAtTime(.12,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.1);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.12)}catch(e){}}
+function playAlarm(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(440,ac.currentTime);o.frequency.setValueAtTime(440,ac.currentTime+.5);const g=ac.createGain();g.gain.setValueAtTime(.15,ac.currentTime);g.gain.setValueAtTime(.15,ac.currentTime+.5);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.6)}catch(e){}}
+function playScary(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(55,ac.currentTime);o.frequency.exponentialRampToValueAtTime(220,ac.currentTime+2);const g=ac.createGain();g.gain.setValueAtTime(.4,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+2);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+2)}catch(e){}}
+function playSiren(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(600,ac.currentTime);o.frequency.linearRampToValueAtTime(1100,ac.currentTime+.8);o.frequency.linearRampToValueAtTime(600,ac.currentTime+1.6);const g=ac.createGain();g.gain.setValueAtTime(.12,ac.currentTime);g.gain.setValueAtTime(.12,ac.currentTime+1.3);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+1.7);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+1.8)}catch(e){}}
+let ashActive=false;
+function startAsh(){if(ashActive)return;ashActive=true;const mp=document.getElementById('map');let cv=document.getElementById('ashCanvas');if(!cv){cv=document.createElement('canvas');cv.id='ashCanvas';cv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:650';mp.appendChild(cv)}cv.width=mp.clientWidth;cv.height=mp.clientHeight;const ctx=cv.getContext('2d');const parts=[];for(let i=0;i<80;i++)parts.push({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*2.5+.5,vy:Math.random()*1+.4,vx:(Math.random()-.5)*.8,a:Math.random()*.6+.2});function loop(){if(!ashActive)return;ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#999';parts.forEach(p=>{p.y+=p.vy;p.x+=p.vx;if(p.y>cv.height){p.y=-5;p.x=Math.random()*cv.width}ctx.globalAlpha=p.a;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1;requestAnimationFrame(loop)}loop()}
+function stopAsh(){ashActive=false}
+function recalcLeaderBonuses(){
+leaderCostBonus=1;leaderNukeBonus=1;leaderCEPBonus=1;leaderIncomeBonus=1;leaderRadiusBonus=1;
+if(leaderId==='putin')leaderCostBonus=.8;
+if(leaderId==='trump')leaderNukeBonus=1.15;
+if(leaderId==='macron')leaderCEPBonus=.9;
+if(leaderId==='scholz')leaderIncomeBonus=1.2;
+if(leaderId==='zelensky')leaderRadiusBonus=1.25;
+if(leaderId==='pallaich'){leaderCostBonus=.5;leaderRadiusBonus=1.5}
+if(leaderId==='glyph'){leaderCostBonus=.7;leaderRadiusBonus=1.5}
+if(leaderId==='albert'){leaderCostBonus=.5;leaderRadiusBonus=1.25}
+if(leaderId==='altuha'){leaderRadiusBonus=1.2}
+}
+function applyLeaderBonuses(){recalcLeaderBonuses();if(leaderId){$('resLeaderChip').style.display='';let l=getLeaderList().find(x=>x.id===leaderId);let nm=l?l.name:'Секрет';$('resLeader').textContent=nm}else{$('resLeaderChip').style.display='none'}}
+// ========== INIT ==========
+function initDOM(){
+startOverlay=$('startOverlay');introOverlay=$('introOverlay');appContent=$('appContent');marchAudio=$('marchAudio');pauseBtn=$('pauseBtn');pauseOverlay=$('pauseOverlay');
+// Музыка: если источник недоступен, не ломаем игру, а пишем в новости
+marchAudio.addEventListener('error',()=>{try{if(musicFailCount>=MARCHES.length){addNews('🎵 Музыка недоступна (нет сети/файлы). Выключена.','#888');marchAudio.muted=true;return}musicFailCount++;switchMarch((currentMarchIdx+1)%MARCHES.length)}catch(e){}});
+marchAudio.addEventListener('ended',()=>{try{switchMarch((currentMarchIdx+1)%MARCHES.length)}catch(e){}});
+marchAudio.addEventListener('canplay',()=>{try{musicFailCount=0}catch(e){}});
+initStars();drawStars();
+$('startRecord').textContent=record;
+const cc=doneCampaigns.length;$('startCampaign').textContent=`${cc}/12`;
+$('recordDisplay').textContent=record;
+$('resMoney').textContent=money;$('resScore').textContent=score;$('resCombo').textContent='x'+combo;
+const n=CAMPAIGNS.findIndex(c=>!doneCampaigns.includes(c.id));$('resCampaign').textContent=n>=0?'Кампания '+(n+1):'✅ Все';
+$('radLevel').textContent=Math.floor(globalRad)+'%';
+updatePVODisplay();
+applyLeaderBonuses();
+try{updateTitle()}catch(e){}
+window.addEventListener('resize',()=>{if(map)map.invalidateSize()});
+document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',function(){document.querySelectorAll('.tab-btn,.tab-panel').forEach(e=>e.classList.remove('active'));this.classList.add('active');let panel=document.getElementById(this.dataset.tab);if(panel)panel.classList.add('active');if(this.dataset.tab==='tab-stats'){try{updateStatsTab()}catch(e){}}}));
+bindEvents();
+updateStatsTab();
+}
+function updateStatsTab(){
+$('sTotal').textContent=st.totalBombs;$('sTargets').textContent=st.targetsHit;$('sScore').textContent=score;$('sMoney').textContent=money;
+$('sRad').textContent=Math.floor(globalRad)+'%';$('sCombo').textContent='x'+combo;
+$('sCasualties').textContent=st.casualties.toLocaleString();$('sAch').textContent=ach.length;
+$('sPower').textContent=st.maxPower.toLocaleString()+' кт';$('sUnique').textContent=usedBombIds.size;
+$('sPVO').textContent=pvoLevel+' ('+getPVOChance()+'%)';$('sPrestige').textContent=prestigeCount;
+try{renderWarLog()}catch(e){}
+try{renderBombCollection()}catch(e){}
+}
+function renderBombCollection(){const el=$('bombCollection');if(!el)return;const total=BOMBS.length;const owned=usedBombIds.size;let html='';const sorted=[...BOMBS].sort((a,b)=>(usedBombIds.has(a.id)?1:0)-(usedBombIds.has(b.id)?1:0));sorted.forEach(b=>{const got=usedBombIds.has(b.id);html+=`<span title="${got?b.name:'???'}" style="width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:12px;background:${got?'rgba(255,170,0,.25)':'rgba(255,255,255,.05)'};border:1px solid ${got?'rgba(255,200,80,.4)':'rgba(255,255,255,.1)'};opacity:${got?'1':'.4'}">${got?b.icon:'🔒'}</span>`});el.innerHTML=`<div style="width:100%;font-size:.66rem;color:#888;margin-bottom:2px">Собрано <b style="color:var(--gold)">${owned}</b> из ${total}</div>`+html}
+function renderWarLog(){const l=$('warLogList');if(!l)return;l.innerHTML=warLog.length?warLog.map(w=>`<div style="padding:1px 0"><span style="color:#888">${w.date} ${w.time}</span> ${w.type} <b style="color:var(--accent)">${w.title}</b> ${w.detail}</div>`).join(''):'—'}
+function exportWarLog(){const txt='ЖУРНАЛ ВОЕНАЧАЛЬНИКА — GLOBAL STRIKE\n'+'='.repeat(40)+'\n'+warLog.map(w=>`[${w.date} ${w.time}] ${w.type} ${w.title} ${w.detail}`).join('\n');const blob=new Blob([txt],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='journal-general.txt';a.click();}
+function getPVOChance(){const base=pvoLevel*15;let reduction=0;if(leaderId==='putin')reduction=.2;if(leaderId==='trump')reduction=.1;return Math.round(base*(1-reduction))}
+function updatePVODisplay(){$('resPVO').textContent=getPVOChance()+'%';if(pallaichUnlocked){$('resLeaderChip').style.display='';$('resLeader').textContent='💀 ПАЛ-ЛАИЧ'}}
+function checkPVO(){if(window.__t900Break){window.__t900Break=false;return false;}const chance=getPVOChance();return Math.random()*100<chance}
+function checkPallaichUnlock(){if(pallaichUnlocked||leaderId!=='putin')return;if(!usedBombIds.has('t1'))return;const kyivCoords=[50.4501,30.5234];let kyivHit=destroyedCityNames.has('Киев');if(targetPoint){const d=map?map.distance(L.latLng(targetPoint),L.latLng(kyivCoords)):Infinity;if(d<5000)kyivHit=true}if(kyivHit){pallaichUnlocked=true;saveAll();playScary();const t=$('scaryToast');t.style.visibility='visible';t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';t.style.visibility='hidden'},7000);addNews('💀👁️ ПАЛ-ЛАИЧ освобождён из бездны!','red');updatePVODisplay()}}
+function checkSecretUnlocks(){
+// НИКИТА РОБОТ: 10000 очков и 30+ бомб
+if(!nikitaUnlocked&&score>=10000&&st.totalBombs>=30){nikitaUnlocked=true;saveAll();showAchieve({ic:'🤖',n:'НИКИТА РОБОТ разблокирован',d:'ИИ-хакер присоединяется. +1 апгрейд каждые 50 бомб.'})}
+// ГЛИФ: разрушить 3 АЭС
+if(!glyphUnlocked&&st.plantsHit>=3){glyphUnlocked=true;saveAll();showAchieve({ic:'🐍',n:'ГЛИФ разблокирован',d:'Древняя сущность пробудилась. +50% радиация.'})}
+// Т-900: 100 попаданий в цель
+if(!t900Unlocked&&st.targetsHit>=100){t900Unlocked=true;saveAll();showAchieve({ic:'🤖',n:'Т-900 разблокирован',d:'Боевой андроид подчиняется. 1 гарантированный ПРО-прорыв.'})}
+// АЛЬБЕРТ: все 12 бомб «Фантастика»
+if(!albertUnlocked&&BOMBS.filter(x=>x.category==='Фантастика').every(x=>usedBombIds.has(x.id))){albertUnlocked=true;saveAll();showAchieve({ic:'🧙',n:'АЛЬБЕРТ разблокирован',d:'Безумный учёный на вашей стороне. −50% фантастика.'})}
+}
+function showHint(){const h=document.createElement('div');h.style.cssText='position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:12px 22px;border-radius:30px;z-index:700;font-size:.78rem;pointer-events:none;text-align:center;max-width:520px;line-height:1.5';h.textContent='👆 Кликните по карте для запуска · Выберите лидера (арсенал) · 🛡️ ПВО перехватывает бомбы · ⚔️ Конфликт-зоны +50% · 💀 Престиж в статусе · Секрет: Путин + Царь-бомба + Киев';document.getElementById('map').appendChild(h);setTimeout(()=>h.remove(),12000)}// ========== STARS ==========
+let stars=[];
+function initStars(){const c=$('startBgCanvas');c.width=window.innerWidth;c.height=window.innerHeight;stars=[];for(let i=0;i<160;i++)stars.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*2+.5,a:Math.random()*.8+.2,s:Math.random()*.02+.005})}
+function drawStars(){if(!startOverlay.classList.contains('hidden')){const c=$('startBgCanvas'),ctx=c.getContext('2d');ctx.fillStyle='#0a0e14';ctx.fillRect(0,0,c.width,c.height);stars.forEach(s=>{s.a+=s.s;if(s.a>1||s.a<.2)s.s*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${s.a})`;ctx.fill()});requestAnimationFrame(drawStars)}}
+// ========== FIREWORKS ==========
+let fws=[];
+function startFireworks(){const c=$('fireworksCanvas');c.width=window.innerWidth;c.height=window.innerHeight;for(let i=0;i<50;i++)setTimeout(()=>fws.push({x:Math.random()*c.width,y:Math.random()*c.height*.5,vx:(Math.random()-.5)*8,vy:Math.random()*-10-3,life:Math.random()*40+30,color:`hsl(${Math.random()*360},100%,60%)`}),i*35);animateFw()}
+function animateFw(){if(!$('introOverlay').classList.contains('active'))return;const c=$('fireworksCanvas'),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);fws=fws.filter(p=>p.life>0);fws.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life--;ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill()});requestAnimationFrame(animateFw)}
+// ========== MAP ==========
+function initMap(){if(map)return;
+map=L.map('map',{center:[20,0],zoom:2.5,minZoom:2,maxZoom:14,zoomControl:true,worldCopyJump:true});
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19,opacity:.15}).addTo(map);
+CITIES.forEach(c=>{L.circleMarker(c.coords,{radius:3,color:'#00ccff',fillColor:'#00aaff',fillOpacity:.5,weight:1}).addTo(map).bindTooltip(`${c.name} (${c.country})`)});
+PLANTS.forEach(p=>{L.circleMarker(p.coords,{radius:5,color:'#ffaa00',fillColor:'#ff8800',fillOpacity:.8,weight:1}).addTo(map).bindTooltip(`☢️ ${p.name}`)});
+CONFLICT_ZONES.forEach(cz=>{const m=L.circleMarker(cz.coords,{radius:11,color:'#ff0000',fillColor:'#ff0000',fillOpacity:.5,weight:2,dashArray:'6 4'}).addTo(map);m.bindTooltip(`⚔️ ${cz.name}: ${cz.desc}`);if(m._path)m._path.classList.add('conflict-pulse')});
+map.on('click',e=>{if(window.__gameMode==='scout'){showCountryProfile(e.latlng)}else{requestLaunch(e.latlng)}});
+populateBombSel();populateMarchSel();updateWindUI();
+$('recordDisplay').textContent=record;$('miniScore').textContent='⭐ '+score;
+renderHistory();renderNews();generateTarget();updateComboUI();
+}
+function populateBombSel(){const s=$('bombSelect');s.innerHTML='';const cats=[...new Set(BOMBS.map(b=>b.category))];cats.forEach(cat=>{const og=document.createElement('optgroup');og.label=cat;const filtered=BOMBS.filter(b=>b.category===cat);filtered.forEach(b=>{const opt=document.createElement('option');opt.value=b.id;opt.textContent=`${b.icon} ${b.name} (${b.country}) — ${b.powerLabel}`;og.appendChild(opt)});s.appendChild(og)});s.addEventListener('change',function(){const b=BOMBS.find(x=>x.id===this.value);if(b){currentBomb=b;updateBombCard()}});s.value=BOMBS[0].id;updateBombCard()}
+function randomBombSelect(){const b=BOMBS[Math.floor(Math.random()*BOMBS.length)];currentBomb=b;$('bombSelect').value=b.id;updateBombCard();addNews('🎲 Случайная бомба: '+b.icon+' '+b.name,'#888')}
+function updateBombCard(){const b=currentBomb;$('bombIcon').textContent=b.icon;$('bombName').textContent=b.name;$('bombMeta').innerHTML=`<span class="badge badge-country">${b.country}</span><span class="badge badge-cat">${b.category}</span><span class="badge badge-power">${b.powerLabel}</span>`}
+function populateMarchSel(){const s=$('marchSelect');s.innerHTML='';MARCHES.forEach((m,i)=>{const opt=document.createElement('option');opt.value=i;opt.textContent=`${m.name}`;s.appendChild(opt)});s.addEventListener('change',function(){switchMarch(parseInt(this.value))})}
+function switchMarch(idx){if(!MARCHES[idx])return;currentMarchIdx=idx;const m=MARCHES[idx];
+// Try a local file (music-<id>.<ext>) ONLY if it actually exists, otherwise use the remote URL
+const localCandidates=[m.local,('music-'+m.id+'.'+m.url.split('.').pop())];
+let useSrc=m.url;
+for(let i=0;i<localCandidates.length;i++){if(localCandidates[i]){useSrc=localCandidates[i];break;}}
+marchAudio.onerror=null;
+marchAudio.src=useSrc;
+marchAudio.load();
+function tryPlay(){if(isMuted||!gameStarted)return;marchAudio.volume=parseInt($('volumeSlider').value)/100;const p=marchAudio.play();if(p&&p.catch)p.catch(()=>{marchAudio.addEventListener('canplay',function r(){marchAudio.play().catch(()=>{});marchAudio.removeEventListener('canplay',r)},{once:true})})}
+tryPlay();}
+function randomWind(){wind.speed=+(Math.random()*30+2).toFixed(1);wind.direction=Math.floor(Math.random()*360);updateWindUI()}
+function updateWindUI(){$('windArrow').style.transform=`rotate(${wind.direction}deg)`;$('windText').innerHTML=`<strong>${wind.speed} м/с</strong> · ${wind.direction}°`}
+function startDynamicWind(){dynamicWindInterval&&clearInterval(dynamicWindInterval);dynamicWindInterval=setInterval(()=>{if(windMode==='dynamic'){wind.speed=Math.min(35,Math.max(2,wind.speed+(Math.random()-.5)*5));wind.direction=(wind.direction+Math.floor(Math.random()*20-10)+360)%360;wind.speed=+wind.speed.toFixed(1);updateWindUI()}},5000)}
+// ========== PAUSE ==========
+function pauseGame(){if(!gameStarted)return;paused=true;try{pauseBtn&&pauseBtn.classList.add('paused-on')}catch(e){};[passiveIncomeInterval,worldNewsInterval,reactInterval,comboInterval,dynamicWindInterval].forEach(ix=>{if(ix)clearInterval(ix)});try{marchAudio.pause()}catch(e){};addNews('⏸️ Игра на паузе. Нажмите ▶ чтобы продолжить.','#888');drawPauseOverlay(true)}
+function resumeGame(){paused=false;try{pauseBtn&&pauseBtn.classList.remove('paused-on')}catch(e){};try{startPassiveIncome();startWorldNews();startReactions();startDynamicWind()}catch(e){};try{updateComboUI()}catch(e){};if(comboTimer>0){comboInterval=setInterval(()=>{comboTimer--;if(comboTimer<=0){comboTimer=0;combo=1;lastHit=false;updateComboUI();clearInterval(comboInterval);comboInterval=null}},1000)}try{marchAudio.play().catch(()=>{})}catch(e){};addNews('▶️ Игра возобновлена.','green');drawPauseOverlay(false)}
+function drawPauseOverlay(show){try{let ov=$('pauseOverlay');if(!ov)return;ov.classList.toggle('active',!!show)}catch(e){}}
+function overlayAndPause(){gameStarted?pauseGame():null}
+// ========== NUCLEAR WINTER ==========
+function updateNuclearWinter(){
+mapDarkness=Math.min(0.7,globalRad/100*0.6);
+const m=document.getElementById('map');
+m.style.filter=`brightness(${1-mapDarkness}) saturate(${1-mapDarkness})`;
+// СИРЕНА при превышении 40% радиации (однократно)
+if(globalRad>=40&&!window.__sirenPlayed){window.__sirenPlayed=true;playSiren();addNews('🚨 ВОЗДУШНАЯ ТРЕВОГА! Радиация превысила 40%!','#ff6666');}
+// ПЕПЕЛ после 60% радиации
+if(globalRad>=60&&!window.__ashStarted){window.__ashStarted=true;startAsh();}
+if(globalRad>=50&&!news.find(n=>n.text.includes('ЯДЕРНАЯ ЗИМА')))addNews('🌍❄️ ЯДЕРНАЯ ЗИМА! Радиация превысила 50%!','red');
+if(globalRad>=75)addNews('☠️ Радиация 75% — массовое вымирание!','red');
+if(globalRad>=100)addNews('💀 100% РАДИАЦИИ — ЗЕМЛЯ БЕЗЛЮДНА!','red');
+// СЕКРЕТНАЯ КОНЦОВКА: 100% радиации + Царь-бомба
+if(globalRad>=100&&usedBombIds.has('t1')&&!window.__endingShown){window.__endingShown=true;showEnding();}
+}
+// ========== СЕКРЕТНЫЕ КОНЦОВКИ ==========
+function showEnding(){
+try{
+const endStats=$('endStats');
+const totalBombs=st.totalBombs||0, targets=st.targetsHit||0, casual=st.casualties||0, plants=st.plantsHit||0;
+endStats.innerHTML=
+`<b>🔥 Бомб запущено:</b> ${totalBombs}<br>`+
+`<b>🎯 Целей поражено:</b> ${targets}<br>`+
+`<b>⚠️ Жертв (млн):</b> ${casual}<br>`+
+`<b>🏭 АЭС поражено:</b> ${plants}<br>`+
+`<b>🏅 Счёт:</b> ${score}<br>`+
+`<b>☢️ Радиация:</b> ${globalRad||0}%`;
+$('endingModal').classList.add('active');
+addNews('💀 Секретная концовка: Земля погибла','red');
+}catch(e){}
+}
+function showSvetlovEnding(){
+try{
+$('svetlovText').innerHTML='Когда Царь-бомба стёрла Вашингтон с карты, полковник Саня Светлов понял: у него остался один приказ — «отойдите от дел». Он забрал уцелевший чемоданчик, вышел к морю и вдохнул полной грудью. Осталось одно: решиться на отпуск.';
+$('svetlovModal').classList.add('active');
+addNews('🍹 Секретная концовка: Саня Светлов','blue');
+}catch(e){}
+}
+const _svYes=$('svetlovYes');if(_svYes)_svYes.addEventListener('click',()=>{try{const img=$('svetlovImg');if(img)img.src='beach-sunny.jpg';$('svetlovText').innerHTML='🌊 Солнце, коктейли и регги на берегу. Саня заказал «Пинаколаду» и впервые за двадцать лет выключил рацию. Отпуск. Обычный человеческий отпуск.';addNews('☀️ Саня выбрал отпуск на пляже','blue')}catch(e){}});
+const _svNo=$('svetlovNo');if(_svNo)_svNo.addEventListener('click',()=>{try{const img=$('svetlovImg');if(img)img.src='beach-gloomy.jpg';$('svetlovText').innerHTML='🌧️ Саня вернулся в казённый кабинет. Где-то гудит вентиляция, на столе — дело «Земля». Но в ящике лежит путёвка. И он её не выбросил. Пока. Жизнь без кайфа не жизнь.';addNews('🌧️ Саня остался дома, но путёвку не выбросил','blue')}catch(e){}});
+// СБРОС УРОВНЯ РАДИАЦИИ
+function resetRadiation(){globalRad=0;window.__sirenPlayed=false;window.__ashStarted=false;window.__endingShown=true;try{stopAsh()}catch(e){}const m=document.getElementById('map');if(m){m.style.filter='brightness(1) saturate(1)';m.style.transform=''}const rl=$('radLevel');if(rl)rl.textContent='0%';const sm=$('sRad');if(sm)sm.textContent='0%';saveAll();addNews('🧹 Радиация сброшена до 0%! Мир вздохнул свободнее.','green');try{updateNuclearWinter()}catch(e){};try{updateStatsTab()}catch(e){}}
+// ========== REACTIONS ==========
+function startReactions(){reactInterval&&clearInterval(reactInterval);reactInterval=setInterval(checkReaction,15000)}
+function checkReaction(){
+const nukeCount=BOMBS.filter(x=>x.category==='Ядерные'&&usedBombIds.has(x.id)).length;
+const hitCount=st.targetsHit;
+if(nukeCount>=3&&globalRad>20){
+const msgs=[
+'🌐 ООН: «Применение ядерного оружия осуждается!»',
+'⚠️ Вашингтон: «Санкции введены! Стоимость бомб +25%»',
+'🚫 Пекин: «Дипломатические отношения разорваны!»',
+'💬 Москва: «Ответные меры приняты. Внимание!»',
+];
+const msg=msgs[Math.floor(Math.random()*msgs.length)];
+showReaction(msg);
+if(globalRad>40)showReaction('❄️ Ядерная зима усиливается. Температура падает.');
+}
+if(hitCount>=10&&globalRad>30){showReaction('🌍 Международный суд: «Расследование военных преступлений!»');playAlarm()}
+}
+function showReaction(msg){const b=$('reactBanner');b.textContent=msg;b.classList.add('active');setTimeout(()=>b.classList.remove('active'),6000)}
+function clearReactions(){reactInterval&&clearInterval(reactInterval)}
+// ========== CONFIRM ==========
+function requestLaunch(latlng){
+const b=currentBomb;const nuke=b.category==='Ядерные'||b.category==='Термоядерные';const need=confirmMode==='always'||(confirmMode==='nuke'&&nuke);
+if(need){pendingLaunch=latlng;const cep=b.cep*(1-.05*(upgrades.acc||0))*leaderCEPBonus;$('confirmIcon').textContent=b.icon;$('confirmTitle').textContent=`${b.icon} ${b.name}`;$('confirmDetails').innerHTML=`<div class="report-item"><span>Тип</span><span>${b.type}</span></div><div class="report-item"><span>Мощность</span><span>${b.powerLabel}</span></div><div class="report-item"><span>Радиус</span><span>${(b.blastRadius*(detonationHeight==='a'?1.3:detonationHeight==='h'?.7:1)*leaderRadiusBonus).toFixed(2)} км</span></div><div class="report-item"><span>Стоимость</span><span>${Math.ceil(b.cost*leaderCostBonus)}💰</span></div><div class="report-item"><span>Очки ≈</span><span style="color:var(--accent);font-weight:700">${estimateScore(b)}</span></div>`;$('confirmOverlay').classList.add('active')}else{executeLaunch(latlng)}
+}
+function estimateScore(b){let r=b.blastRadius*(detonationHeight==='a'?1.3:detonationHeight==='h'?.7:1)*leaderRadiusBonus;return Math.max(1,Math.floor(b.cost*leaderCostBonus+r*100+b.radiation*5))}
+// ========== LAUNCH ==========
+function executeLaunch(latlng){
+// Т-900: каждый 5-й выстрел гарантированно пробивает ПВО (вычисляем ДО checkPVO)
+if(leaderId==='t900'&&st.totalBombs>0&&st.totalBombs%5===0){window.__t900Break=true;}
+if(checkPVO()){addNews('🚫 ПВО перехватила бомбу!','red');$('reportContent').innerHTML='🚫 ПВО перехватила бомбу! Стоимость не списана.';playAlarm();return}
+const nukeCount=BOMBS.filter(x=>x.category==='Ядерные'&&usedBombIds.has(x.id)).length;
+const penalty=nukeCount>=3&&globalRad>20?1.25:1;
+if(penalty>1)addNews('💸 Санкции: стоимость +25%','red');
+const cost=Math.ceil(currentBomb.cost*leaderCostBonus*penalty*(leaderId==='albert'&&currentBomb.category==='Фантастика'?0.5:1));
+if(money<cost){addNews('⚠️ Не хватает!','red');$('reportContent').innerHTML=`Не хватает. Нужно ${cost}💰`;return}
+money-=cost;
+blastLayers.forEach(l=>{try{map.removeLayer(l)}catch(e){}});blastLayers=[];
+const bomb=currentBomb;
+const accLvl=upgrades.acc||0,powLvl=upgrades.pow||0;
+const cepEff=bomb.cep*(1-.05*accLvl)*leaderCEPBonus;
+const angle=Math.random()*2*Math.PI;const dist=Math.abs(randn()*cepEff/3);
+const latOff=(dist*Math.cos(angle))/111320;const lngOff=(dist*Math.sin(angle))/(111320*Math.cos(latlng.lat*Math.PI/180));
+const target=L.latLng(latlng.lat+latOff,latlng.lng+lngOff);
+let hF=1;if(detonationHeight==='a')hF=1.3;if(detonationHeight==='h')hF=.7;
+const eR=bomb.blastRadius*hF*(1+.08*powLvl)*leaderRadiusBonus;const eRad=bomb.radiation*(detonationHeight==='h'?1.5:1)*(leaderId==='pallaich'?1.5:1)*(leaderId==='glyph'?1.5:1);
+let dM=1;if(difficulty==='easy')dM=1.3;else if(difficulty==='hard')dM=.7;else if(difficulty==='realistic')dM=.5;
+const fR=eR*dM;const blastRadM=Math.max(fR*1000,100);
+playWhistle();setTimeout(()=>playExplosion(fR),1200);
+// Кинематографическая тряска карты при мощном взрыве
+if(fR>=5||bomb.power>=100){setTimeout(()=>{const m=document.getElementById('map');let n=0;const shake=setInterval(()=>{n++;m.style.transform=`translate(${(Math.random()-.5)*22}px,${(Math.random()-.5)*22}px)`;m.classList.add('shake-ani');if(n>=14){clearInterval(shake);m.style.transform='';m.classList.remove('shake-ani')}},50)},1000);}
+const pt=map.latLngToContainerPoint(target);
+const flash=document.createElement('div');flash.className='flash';flash.style.cssText=`left:${pt.x-12}px;top:${pt.y-12}px;width:24px;height:24px`;document.getElementById('map').appendChild(flash);setTimeout(()=>flash.remove(),600);
+const sw=document.createElement('div');sw.className='shockwave';sw.style.cssText=`left:${pt.x-25}px;top:${pt.y-25}px;width:50px;height:50px`;document.getElementById('map').appendChild(sw);setTimeout(()=>sw.remove(),2000);
+if(bomb.power>1||bomb.radiation>0){const m=document.createElement('div');m.className='mushroom';const sz=60+fR*10;m.style.cssText=`left:${pt.x-sz/2}px;top:${pt.y-sz}px;width:${sz}px;height:${sz*1.5}px;background:radial-gradient(ellipse at bottom,rgba(255,150,50,0.8),rgba(200,80,30,0.5) 40%,rgba(100,50,20,0.2) 70%,transparent);border-radius:50% 50% 30% 30%;filter:blur(2px)`;document.getElementById('map').appendChild(m);setTimeout(()=>m.remove(),4000)}
+const bd=document.createElement('div');bd.className='blast-circle';const bs=60+fR*25;bd.style.cssText=`left:${pt.x-bs/2}px;top:${pt.y-bs/2}px;width:${bs}px;height:${bs}px;background:radial-gradient(circle,rgba(255,255,200,0.9),rgba(255,150,0,0.7),rgba(200,50,0,0.2))`;document.getElementById('map').appendChild(bd);setTimeout(()=>bd.remove(),2800);
+const bc=L.circle(target,{radius:blastRadM,color:'#ff5500',weight:2,fillColor:'#ff7700',fillOpacity:.35}).addTo(map);blastLayers.push(bc);
+if(eRad>0){addFallout(target,eRad,blastRadM);st.radBombs++;st.radCount++}
+const mc=map.getCenter();const tl=L.polyline([mc,target],{color:'#ffaa00',weight:1.5,dashArray:'8 8',opacity:.4}).addTo(map);blastLayers.push(tl);setTimeout(()=>{try{map.removeLayer(tl)}catch(e){}},2000);
+const area=Math.PI*Math.pow(fR,2);
+const popD=Math.random()*500+50;const affected=Math.floor(area*popD);
+const radLvl=eRad>0?(eRad*wind.speed*2.5).toFixed(1):'0';
+let sg=Math.max(1,Math.floor(bomb.cost*leaderCostBonus+fR*100+affected/1000+eRad*5));
+let targetHit=false;
+let conflictHit=false;
+if(targetPoint){const d=map.distance(target,L.latLng(targetPoint));if(d<blastRadM){sg+=500;targetHit=true;lastHit=true;accChain++;st.targetsHit++;$('targetName').textContent='✅ +500';setTimeout(generateTarget,3000);updateCombo(true)}}
+// СЕКРЕТНАЯ КОНЦОВКА: Царь-бомба на Вашингтон -> Саня Светлов
+if(bomb.id==='t1'&&targetPoint){const dc=map.distance(target,L.latLng([38.9072,-77.0369]));if(dc<blastRadM&&!window.__svetlovShown){window.__svetlovShown=true;setTimeout(showSvetlovEnding,600);}}
+CONFLICT_ZONES.forEach(cz=>{const d2=map.distance(target,L.latLng(cz.coords));if(d2<blastRadM){sg=Math.floor(sg*1.5);conflictHit=true;addNews(`⚔️ Попадание в зону конфликта: ${cz.name}! +50% очков`,'gold')}});
+const nearest=findNearestCity(target,200000);
+if(nearest){st.continents[nearest.country]=1;if(nearest.dist<blastRadM){addNews(`💥 ${nearest.name} (${nearest.country})`);destroyedCityNames.add(nearest.name)}}
+if(!targetHit&&dist<cepEff){updateCombo(true)}else if(!targetHit){lastHit=false;accChain=0;updateCombo(false)}
+if(eRad>0){const rb=eRad*.4*(1-.15*(upgrades.rad||0));globalRad=Math.min(100,globalRad+rb);$('radLevel').textContent=Math.floor(globalRad)+'%';updateNuclearWinter()}
+if(difficulty==='easy')sg=Math.floor(sg*.8);else if(difficulty==='hard')sg=Math.floor(sg*1.5);else if(difficulty==='realistic')sg=Math.floor(sg*2);
+sg=Math.floor(sg*(1+.1*(upgrades.score||0))*combo*(nukeCount>=3&&globalRad>20?.8:1));
+if((bomb.category==='Ядерные'||bomb.category==='Термоядерные')&&leaderId==='trump')sg=Math.floor(sg*leaderNukeBonus);
+if(leaderId==='altuha')sg=Math.floor(sg*1.2);
+score+=sg;st.totalBombs++;st.casualties+=affected;st.maxPower=Math.max(st.maxPower,bomb.power);
+if(detonationHeight==='h')st.highCount=(st.highCount||0)+1;
+if(detonationHeight==='a')st.airCount=(st.airCount||0)+1;
+if(bomb.category==='Ядерные'||bomb.category==='Термоядерные'){st.nukeChain=(st.nukeChain||0)+1}else{st.nukeChain=0}
+if(targetPoint&&PLANTS.some(p=>p.coords[0]===targetPoint[0]&&p.coords[1]===targetPoint[1]))st.plantsHit=(st.plantsHit||0)+1;
+usedBombIds.add(bomb.id);if(score>st.maxScore)st.maxScore=score;if(cepEff<100)st.preciseHits++;
+const cashEarn=Math.floor((sg*0.1+30)*(leaderId==='scholz'?1.2:1));money+=cashEarn;
+checkPallaichUnlock();
+checkSecretUnlocks();
+// НИКИТА РОБОТ: раз в 50 бомб даёт случайный апгрейд
+if(leaderId==='nikita'&&st.totalBombs>0&&st.totalBombs%50===0){const ups=UPGRADES.filter(u=>u.id!=='pvo');const targets=ups.filter(u=>(upgrades[u.id]||0)<u.max);if(targets.length){const u=targets[Math.floor(Math.random()*targets.length)];upgrades[u.id]=(upgrades[u.id]||0)+1;addNews('🤖 НИКИТА РОБОТ: апгрейд '+u.name+' (+1 ур.)','#f0f');}}
+updateScore();saveAll();renderHistory();renderNews();updateStatsTab();checkAchievements();checkMissions();checkCampaigns();
+$('reportContent').innerHTML=
+`<div class="report-item"><span>💣 ${bomb.name}</span><span>${bomb.country}</span></div>`+
+`<div class="report-item"><span>💥 Радиус</span><span>${fR.toFixed(2)} км</span></div>`+
+`<div class="report-item"><span>🧑‍🤝‍🧑 Жертвы</span><span>≈${affected.toLocaleString()}</span></div>`+
+`<div class="report-item"><span>☢️ Радиация</span><span>${radLvl} Зв/ч</span></div>`+
+`<div class="report-item"><span>🔥 Комбо</span><span style="color:var(--gold)">x${combo}</span></div>`+
+`<div class="report-item"><span>🏆 Очки</span><span style="color:var(--accent);font-weight:700">+${sg}</span></div>`+
+(targetHit?'<div class="report-item"><span style="color:#4caf50">✅ Цель!</span><span>+500</span></div>':'')+
+(conflictHit?'<div class="report-item"><span style="color:#ff4444">⚔️ Конфликт!</span><span>+50%</span></div>':'')+
+(penalty>1?'<div class="report-item"><span style="color:#ff8888">💰 Санкции</span><span>+25%</span></div>':'');
+updateResUI();
+const ts=new Date().toLocaleTimeString();const em=targetHit?'🎯':'💥';
+const entry=`${ts} ${em} ${bomb.icon} ${bomb.name}|+${sg}`;history.unshift(entry);if(history.length>30)history.pop();localStorage.setItem('gsHist',JSON.stringify(history));
+map.setView(target,Math.max(map.getZoom(),6));
+}
+function addFallout(target,eRad,blastRadM){
+const rf=eRad/10;const we=wind.speed*rf;const len=blastRadM*(1.5+we*.5);const wid=blastRadM*(.8+we*.3);
+const ar=(wind.direction-90)*Math.PI/180;const ox=Math.cos(ar)*len*.5;const oy=Math.sin(ar)*len*.5;
+const la=oy/111320;const lo=ox/(111320*Math.cos(target.lat*Math.PI/180));
+const cs=L.latLng(target.lat+la,target.lng+lo);const pts=[];
+for(let i=0;i<=60;i++){const t=(i/60)*2*Math.PI;const rx=wid*Math.cos(t);const ry=len*Math.sin(t);pts.push([cs.lat+(rx*Math.sin(ar)+ry*Math.cos(ar))/111320,cs.lng+(rx*Math.cos(ar)-ry*Math.sin(ar))/(111320*Math.cos(target.lat*Math.PI/180))])}
+const f=L.polygon(pts,{color:'#ffeb3b',weight:1,fillColor:'#ffeb3b',fillOpacity:.15,dashArray:'4 4'}).addTo(map);
+falloutLayers.push(f);
+setTimeout(()=>{try{f.setStyle({opacity:.5,fillOpacity:.05})}catch(e){}},30000);
+setTimeout(()=>{try{map.removeLayer(f)}catch(e){}},60000);
+}
+function findNearestCity(latlng,maxDist){let n=null,md=Infinity;CITIES.forEach(c=>{const d=map.distance(latlng,L.latLng(c.coords));if(d<md){md=d;n={...c,dist:d}}});return n&&n.dist<=maxDist?n:null}
+// ========== CITY MISSION HELPERS ==========
+function getDestroyedCityNamesByContinent(continent){return CITIES.filter(c=>c.continent===continent).filter(c=>destroyedCityNames.has(c.name)).length}
+function isMoscowDestroyed(){return destroyedCityNames.has('Москва')}// ========== COMBO ==========
+function updateCombo(hit){if(hit){combo=Math.min(99,combo+1);comboTimer=8+(upgrades.combo||0)*3}else{combo=1;comboTimer=0}
+if(combo>=5)addNews(`🔥 Комбо x${combo}!`,'gold');
+clearInterval(comboInterval);if(combo>1){comboInterval=setInterval(()=>{comboTimer--;if(comboTimer<=0){combo=1;comboTimer=0;updateComboUI();clearInterval(comboInterval)}updateComboUI()},1000)}
+updateComboUI()}
+function updateComboUI(){$('comboDisplay').textContent='x'+combo;$('comboTimer').textContent=combo>1?comboTimer+'с':'—';$('resCombo').textContent='x'+combo}
+// ========== TARGET ==========
+function generateTarget(){if(targetLayer){try{map.removeLayer(targetLayer)}catch(e){};targetLayer=null}const all=[...CITIES,...PLANTS];const t=all[Math.floor(Math.random()*all.length)];targetPoint=t.coords;targetIsPlant=PLANTS.some(p=>p.coords[0]===t.coords[0]&&p.coords[1]===t.coords[1]);targetLayer=L.marker(targetPoint,{icon:L.divIcon({className:'',html:`<div style="font-size:28px;filter:drop-shadow(0 0 8px rgba(255,0,0,.8))">${targetIsPlant?'☢️':'🎯'}</div>`,iconSize:[30,30]})}).addTo(map).bindPopup(`Цель: ${t.name}`);$('targetName').textContent=t.name}
+// ========== SCORE ==========
+function updateScore(){$('scoreDisplay').textContent=score;$('miniScore').textContent='⭐ '+score;$('resScore').textContent=score;if(score>record){record=score;localStorage.setItem('gsRecord',record);$('recordDisplay').textContent=record;$('modalText').textContent=`Новый рекорд: ${record}!`;$('recordModal').classList.add('active');addNews(`🏆 Новый рекорд: ${record} очков!`,'gold');
+const name=prompt('🎉 Новый рекорд! Введите имя для лидерборда:','Генерал');
+if(name)addToLeaderboard(name);else addToLeaderboard('Аноним');
+}$('recordDisplay').textContent=record}
+function updateResUI(){$('resMoney').textContent=money;$('resScore').textContent=score;$('resCombo').textContent='x'+combo;updateStatsTab();updatePVODisplay()}
+function renderHistory(){const l=$('historyLog');l.innerHTML=history.length?history.map(h=>`<div style="padding:1px 0;font-size:.62rem">${h}</div>`).join(''):'—'}
+function renderNews(){const f=$('newsFeed');f.innerHTML=news.length?news.map(n=>`<div class="news-item"><span class="news-time">${n.time}</span><span${n.color?` style="color:${n.color}"`:''}>${n.text}</span></div>`).join(''):'—'}
+// ========== ACHIEVEMENTS ==========
+function checkAchievements(){let before=ach.length;ACHIEVEMENTS.forEach(a=>{if(!ach.includes(a.id)&&a.ch()){ach.push(a.id);saveAll();showAchieve(a)}});updateTitle();if(ach.length!==before&&ach.length===15)addWarLog('🏅','Титул','Серебряный стратег');if(ach.length!==before&&ach.length===20)addWarLog('👑','Титул','Золотой военачальник')}
+function updateTitle(){let t='Новобранец';if(ach.length>=5)t='Сержант';if(ach.length>=10)t='Офицер';if(ach.length>=15)t='Серебряный стратег';if(ach.length>=20)t='Золотой военачальник';window.__title=t;const el=$('titleDisplay');if(el)el.textContent=t}
+function showAchieve(a){$('achieveIcon').textContent=a.ic;$('achieveTitle').textContent=a.n;$('achieveDesc').textContent=a.d;const t=$('achieveToast');t.style.visibility='visible';t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';t.style.visibility='hidden'},4000);playChaChing()}
+// ========== РАЗВЕДКА (профиль страны) ==========
+function showCountryProfile(latlng){const near=findNearestCity(latlng,300000);if(!near){addNews('🕵️ Противник не обнаружен в этом районе.','#888');return;}const destroyed=destroyedCityNames.has(near.name);const c=findCity(near.name);const pop=c?c.pop:'?';const prev=globalRad>20?(globalRad>50?'Зона заражения':'Опасный фон'):'Безопасный фон';const alliance=allianceOf(near.country);const react=globalRad>30&&st.targetsHit>10?'Отношения: ВРАЖДЕБНЫЕ (международное осуждение)':(st.targetsHit>5?'Отношения: ОБЕСПОКОЕННЫЕ':(st.targetsHit>0?'Отношения: НАПРЯЖЁННЫЕ':'Отношения: НЕЙТРАЛЬНЫЕ'));const html=`<div class="report-item"><span>🏙️ ${near.name}</span><span>${near.country}</span></div><div class="report-item"><span>👥 Население</span><span>${pop>1e6?(pop/1e6).toFixed(1)+' млн':pop+' тыс.'}</span></div><div class="report-item"><span>🛡️ Статус</span><span style="color:${destroyed?'#ff5555':'#4caf50'}">${destroyed?'УНИЧТОЖЕН':'Цел'}</span></div><div class="report-item"><span>🔗 Альянс</span><span>${alliance}</span></div><div class="report-item"><span>⚠️ Угроза</span><span>${prev}</span></div><div class="report-item"><span>💬 ${react}</span><span></span></div>`;$('reportContent').innerHTML=`<div style="color:var(--blue);font-weight:700;margin-bottom:4px;font-size:.8rem">🕵️ РАЗВЕДКА</div>`+html;addNews(`🕵️ Разведка: ${near.name} (${near.country})`);}
+function findCity(name){return CITIES.find(x=>x.name===name)||null}
+function allianceOf(country){const russia=['Россия'];const nato=['США','Великобритания','Франция','Германия','Италия','Испания','Польша','Канада','Нидерланды','Норвегия','Финляндия','Турция','Чехия','Беларусь','Украина','Израиль'];const asia=['Китай','Япония','Юж.Корея','Сев.Корея','Иран','Ирак','Сауд.Аравия','ОАЭ','Индия','Пакистан'];if(russia.includes(country))return '🇷🇺 Союзные блоки (ОДКБ)';if(nato.includes(country))return '🇪🇺 НАТО / Запад';if(asia.includes(country))return '🌏 Азия';if(country.includes('Австралия'))return 'AUKUS';if(country.includes('Египет')||country.includes('Африка')||country.includes('Нигерия')||country.includes('Кения'))return '🌍 Африка';return '⚪ Нейтральный'}
+// ========== MISSIONS ==========
+function mProg(m){
+switch(m.ty){
+case'launch':return Math.min(m.t,st.totalBombs);
+case'target':return Math.min(m.t,st.targetsHit);
+case'nuke':return Math.min(m.t,BOMBS.filter(x=>x.category==='Ядерные'&&usedBombIds.has(x.id)).length);
+case'chem':return Math.min(m.t,BOMBS.filter(x=>x.category==='Химические'&&usedBombIds.has(x.id)).length);
+case'bio':return Math.min(m.t,BOMBS.filter(x=>x.category==='Биологические'&&usedBombIds.has(x.id)).length);
+case'score':return Math.min(m.t,score);
+case'combo':return Math.min(m.t,combo);
+case'rad':return Math.min(m.t,Math.floor(globalRad));
+case'money':return Math.min(m.t,money);
+case'thermo':return Math.min(m.t,BOMBS.filter(x=>x.category==='Термоядерные'&&usedBombIds.has(x.id)).length);
+case'wind':return wind.speed>25?1:0;
+case'high':return Math.min(m.t,st.highCount||0);
+case'air':return Math.min(m.t,st.airCount||0);
+case'shop':return Math.min(m.t,upgrCount());
+case'spend':return Math.min(m.t,st.spend);
+case'unique':return Math.min(m.t,usedBombIds.size);
+case'casualties':return Math.min(m.t,st.casualties);
+case'plant':return Math.min(m.t,st.plantsHit||0);
+case'chemAll':return Math.min(m.t,BOMBS.filter(x=>x.category==='Химические'&&usedBombIds.has(x.id)).length);
+case'fantasy':return BOMBS.filter(x=>x.category==='Фантастика'&&usedBombIds.has(x.id)).length?1:0;
+case'bomb_t1':return usedBombIds.has('t1')?1:0;
+case'cont':return Math.min(m.t,Object.keys(st.continents).length);
+case'accChain':return Math.min(m.t,accChain);
+case'city_msk':return isMoscowDestroyed()?1:0;
+case'city_asia':return Math.min(m.t,getDestroyedCityNamesByContinent('Азия'));
+case'city_eu':return Math.min(m.t,getDestroyedCityNamesByContinent('Европа'));
+case'precise':return Math.min(m.t,st.preciseHits);
+case'conflict':return Math.min(m.t,st.preciseHits>0?1:0);
+}
+return 0;
+}
+function upgrCount(){let n=0;for(const k in upgrades)n+=upgrades[k];return n}
+function checkMissions(){MISSIONS.forEach(m=>{if(doneMissions.includes(m.id))return;const p=mProg(m);if(p>=m.t){doneMissions.push(m.id);money+=m.r;saveAll();addNews(`🏁 Миссия: ${m.n||'Миссия'} +${m.r}💰`,'green');playChaChing();showAchieve({ic:'🏁',n:'Миссия: '+m.n,d:'Награда: '+m.r+'💰'});addWarLog('🏁','Миссия',m.n+' (+'+m.r+'💰)')}});renderMissions()}
+function renderMissions(){const l=$('missionList');l.innerHTML='';const d=doneMissions.length;$('missionProgress').textContent=`(${d}/${MISSIONS.length})`;MISSIONS.forEach(m=>{const isD=doneMissions.includes(m.id);const p=mProg(m);const div=document.createElement('div');div.className='mission-item'+(isD?' done':'');div.innerHTML=`<div class="m-name">${isD?'✅':'📌'} ${m.n}</div><div class="m-reward">${isD?'Выполнено':`${p}/${m.t} · +${m.r}💰`}</div>`;l.appendChild(div)})}
+// ========== SHOP ==========
+function renderShop(){const l=$('shopList');l.innerHTML='';$('shopMoney').textContent=money;UPGRADES.forEach(u=>{let lvl=0;if(u.id==='pvo')lvl=pvoLevel;else lvl=upgrades[u.id]||0;const cost=!lvl||lvl<u.max?Math.floor(u.base*Math.pow(u.grow,lvl)):null;const btn=document.createElement('button');btn.className='s-btn'+(lvl>=u.max?' owned':'');if(cost){btn.textContent=cost+'💰';btn.addEventListener('click',()=>{let l2=(u.id==='pvo'?pvoLevel:(upgrades[u.id]||0));if(l2>=u.max)return;const c2=Math.floor(u.base*Math.pow(u.grow,l2));if(money<c2)return;money-=c2;if(u.id==='pvo'){pvoLevel=l2+1;localStorage.setItem('gsPVO',pvoLevel)}else{upgrades[u.id]=l2+1}st.spend+=c2;st.shopCount++;saveAll();addNews(`🛒 ${u.name} ур.${l2+1}`,'green');playChaChing();renderShop();checkMissions();updatePVODisplay()})}else{btn.textContent='MAX';btn.disabled=true}const div=document.createElement('div');div.className='shop-item';const row=document.createElement('div');row.className='s-row';const nm=document.createElement('b');nm.innerHTML=`${u.name} <span style="color:var(--accent)">ур.${lvl}/${u.max}</span>`;row.appendChild(nm);row.appendChild(btn);div.appendChild(row);const desc=document.createElement('div');desc.className='s-desc';desc.textContent=`${u.desc} · ${u.per}`;div.appendChild(desc);l.appendChild(div)})}
+// ========== CAMPAIGN ==========
+function checkCampaigns(){CAMPAIGNS.forEach(c=>{if(doneCampaigns.includes(c.id))return;if(c.goal()){doneCampaigns.push(c.id);money+=c.reward;saveAll();addNews(`⚔️ Кампания «${c.n}» пройдена! +${c.reward}💰`,'gold');playChaChing();showAchieve({ic:'⚔️',n:'Кампания: '+c.n,d:'Награда: '+c.reward+'💰'});addWarLog('⚔️','Кампания',c.n+' (+'+c.reward+'💰)');const cc=doneCampaigns.length;const nxt=CAMPAIGNS.findIndex(c2=>!doneCampaigns.includes(c2.id));$('resCampaign').textContent=nxt>=0?'Кампания '+(nxt+1):'✅ Все';if(cc>=12)showAchieve({ic:'👑',n:'Покоритель мира',d:'Все кампании пройдены!'});$('startCampaign').textContent=`${cc}/12`;renderCampaigns()}});renderCampaigns()}
+function renderCampaigns(){const l=$('campaignList');l.innerHTML='';const d=doneCampaigns.length;$('campaignProg').textContent=`(${d}/${CAMPAIGNS.length})`;CAMPAIGNS.forEach((c,i)=>{const isD=doneCampaigns.includes(c.id);const isNext=i===0||doneCampaigns.includes(CAMPAIGNS[i-1].id);const isCur=!isD&&isNext;const div=document.createElement('div');div.className='campaign-card'+(isD?' done':'')+(isCur?' active-c':'');div.innerHTML=`<div class="c-name">${isD?'✅':'⚔️'} ${c.n}</div><div class="c-desc">${c.d}</div><div class="c-status">${isD?'Выполнено':isCur?'Активно':'🔒 Заблокировано'}</div>`;l.appendChild(div)})}// ========== LEADERBOARD ==========
+function renderLeaderboard(){const l=$('leaderList');l.innerHTML='';
+if(leaderboard.length===0){l.innerHTML='<div style="color:#888;text-align:center;padding:10px">Нет записей.</div>';return}
+leaderboard.sort((a,b)=>b.score-a.score).slice(0,10).forEach((e,i)=>{l.innerHTML+=`<div class="leader-entry"><span class="rnk">#${i+1}</span><span class="nm">${e.name||'—'}</span><span class="sc">${e.score}</span></div>`})}
+function addToLeaderboard(name){if(!name||!name.trim())name='Аноним';leaderboard.push({name:name.trim(),score:score,date:new Date().toLocaleDateString()});leaderboard.sort((a,b)=>b.score-a.score);if(leaderboard.length>10)leaderboard=leaderboard.slice(0,10);localStorage.setItem('gsLB',JSON.stringify(leaderboard));renderLeaderboard()}
+// ========== LEADER SELECT ==========
+function getLeaderList(){const list=LEADERS.map(l=>({...l}));if(pallaichUnlocked)list.push({id:'pallaich',name:'ПАЛ-ЛАИЧ',country:'Неизвестно',unlocked:true,bonus:'-50% стоимость · +50% радиус · +50% радиация',img:PALLAICH_IMG,emoji:'💀'});if(nikitaUnlocked)list.push({id:'nikita',name:'НИКИТА РОБОТ',country:'Сеть',unlocked:true,bonus:'+1 случайный апгрейд каждые 50 бомб',img:'nikita-robot.jpg',emoji:'🤖'});if(glyphUnlocked)list.push({id:'glyph',name:'ГЛИФ',country:'Бездна',unlocked:true,bonus:'+50% радиация · −30% стоимость',img:'glyph.jpg',emoji:'🐍'});if(t900Unlocked)list.push({id:'t900',name:'Т-900',country:'Скайнет',unlocked:true,bonus:'1 ПРО-прорыв гарантирован',img:'t900.jpg',emoji:'🤖'});if(albertUnlocked)list.push({id:'albert',name:'АЛЬБЕРТ',country:'Лаборатория',unlocked:true,bonus:'−50% стоимость фантастики · +25% радиус',img:'albert.jpg',emoji:'🧙'});if(altuhaUnlocked)list.push({id:'altuha',name:'АЛЬТУХА от Илюхи',country:'Неизвестно',unlocked:true,bonus:'+20% очки · +20% радиус',img:'altuha.jpg',emoji:'🌸'});return list}
+function renderLeaderSelect(){const l=$('leaderSelectList');l.innerHTML='';getLeaderList().forEach(ld=>{const sel=leaderId===ld.id;const locked=!ld.unlocked;const div=document.createElement('div');div.className='leader-card'+(sel?' selected':'')+(locked?' locked':'');div.innerHTML=`<div class="lc-avatar" style="background-image:url('${ld.img}')"></div><div class="lc-info"><div class="lc-name">${ld.emoji} ${ld.name}</div><div class="lc-country">${ld.country}</div><div class="lc-bonus">${ld.bonus}</div><div class="lc-status">${locked?'🔒 Заблокирован':sel?'✅ Выбран':'Кликните для выбора'}</div></div>`;if(!locked){div.addEventListener('click',()=>{leaderId=ld.id;localStorage.setItem('gsLeader',leaderId);applyLeaderBonuses();renderLeaderSelect();addNews(`👤 Лидер: ${ld.name}`,'gold');checkAchievements()})}else{div.innerHTML+=`<div class="lc-lock">🔒</div>`;div.addEventListener('click',()=>{addNews(`🔒 Лидер ${ld.name} заблокирован!`,'red')})}l.appendChild(div)})}
+// ========== PRESTIGE ==========
+function renderPrestigeModal(){const s=$('prestigeUpgradeSelect');s.innerHTML='';$('prestigeModalCount').textContent=prestigeCount;UPGRADES.filter(u=>u.id!=='pvo').forEach(u=>{const lvl=upgrades[u.id]||0;if(lvl>0){const opt=document.createElement('option');opt.value=u.id;opt.textContent=`${u.name} (ур.${lvl})`;s.appendChild(opt)}});if(s.options.length===0){const opt=document.createElement('option');opt.value='';opt.textContent='Нет апгрейдов';s.appendChild(opt)}}
+function doPrestige(){const chosen=$('prestigeUpgradeSelect').value;const keptUp={};if(chosen&&upgrades[chosen])keptUp[chosen]=upgrades[chosen];prestigeCount++;score=0;money=1000;globalRad=0;history=[];news=[];usedBombIds=new Set();st={totalBombs:0,targetsHit:0,radBombs:0,radCount:0,maxScore:0,maxPower:0,casualties:0,continents:{},spend:0,shopCount:0,preciseHits:0,highCount:0,airCount:0,plantsHit:0,nukeChain:0};ach=[];doneMissions=[];doneCampaigns=[];upgrades=keptUp;pvoLevel=0;destroyedCityNames=new Set();combo=1;accChain=0;saveAll();localStorage.setItem('gsHist',JSON.stringify([]));$('prestigeModal').classList.remove('active');addNews('💀 Престиж '+prestigeCount+'! Мир начат заново.','red');updateScore();updateResUI();renderHistory();renderNews();updateStatsTab();$('startCampaign').textContent='0/12';$('resCampaign').textContent='Кампания 1';checkAchievements()}
+// ========== SAVE EXPORT ==========
+function exportSave(){const data={money,score,record,globalRad,history,st,ach,doneMissions,doneCampaigns,upgrades,pvoLevel,leaderId,pallaichUnlocked,prestigeCount,destroyedCityNames:[...destroyedCityNames],used:[...usedBombIds],leaderboard};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='global-strike-save.json';a.click();addNews('💾 Сохранение экспортировано','green')}
+function importSave(jsonStr){try{const d=JSON.parse(jsonStr);if(!d||d.money===undefined)throw 1;money=d.money;score=d.score;record=d.record;globalRad=d.globalRad;history=d.history||[];st=Object.assign(st,d.st);ach=d.ach||[];doneMissions=d.doneMissions||[];doneCampaigns=d.doneCampaigns||[];upgrades=d.upgrades||{};pvoLevel=d.pvoLevel||0;leaderId=d.leaderId||null;if(leaderId)localStorage.setItem('gsLeader',leaderId);pallaichUnlocked=d.pallaichUnlocked||false;prestigeCount=d.prestigeCount||0;destroyedCityNames=new Set(d.destroyedCityNames||[]);usedBombIds=new Set(d.used||[]);leaderboard=d.leaderboard||[];saveAll();localStorage.setItem('gsHist',JSON.stringify(history));localStorage.setItem('gsLB',JSON.stringify(leaderboard));$('startRecord').textContent=record;$('recordDisplay').textContent=record;applyLeaderBonuses();updateScore();updateResUI();renderHistory();renderNews();checkAchievements();addNews('📂 Сохранение импортировано!','green')}catch(e){addNews('❌ Ошибка импорта','red')}}
+// ========== PASSIVE INCOME ==========
+function startPassiveIncome(){passiveIncomeInterval&&clearInterval(passiveIncomeInterval);passiveIncomeInterval=setInterval(()=>{let inc=50*(upgrades.cash||0);if(leaderId==='scholz')inc=Math.floor(inc*1.2);if(inc>0){money+=inc;updateResUI();addNews(`🏦 Пассивный доход: +${inc}💰`,'#888')}},10000)}// ========== МИРОВЫЕ НОВОСТИ ==========
+function startWorldNews(){worldNewsInterval&&clearInterval(worldNewsInterval);const headlines=['📰 Мировые СМИ: страны встречаются на саммите ООН','📰 Рынки лихорадит: инвесторы обеспокоены','📰 Тысячи протестующих на улицах европейских столиц','📰 Космические агентства запускают новую миссию','📰 Профсоюзы требуют переговоров','📰 Хакеры атаковали энергосеть','📰 Наука: прорыв в нуклеарной физике','📰 Спорт: финал мирового первенства набирает обороты','📰 Экономический форум: новые соглашения','📰 Сейсмологи предупреждают о подземных толчках','📰 Крипторынок: новый виток волатильности','📰 Метеорологи: аномальная погода по всему миру'];worldNewsInterval=setInterval(()=>{if(gameStarted)addNews(headlines[Math.floor(Math.random()*headlines.length)],'#777');},20000)}
+// ========== BIND EVENTS ==========
+function bindEvents(){
+$('startBtn').addEventListener('click',function(){if(gameStarted)return;gameStarted=true;
+startOverlay.classList.add('hidden');introOverlay.classList.add('active');startFireworks();
+marchAudio.volume=parseInt($('volumeSlider').value)/100;marchAudio.muted=isMuted;switchMarch(currentMarchIdx);try{generalCalls()}catch(e){}
+setTimeout(()=>{introOverlay.classList.remove('active');appContent.classList.add('visible');initMap();startPassiveIncome();startReactions();startWorldNews();showHint();},4000);});
+$('newWindBtn').addEventListener('click',randomWind);
+$('modeAttack').addEventListener('click',()=>{window.__gameMode='attack';$('modeAttack').style.borderColor='var(--accent)';$('modeAttack').style.background='rgba(255,170,0,.15)';$('modeScout').style.borderColor='';$('modeScout').style.background='';addNews('🎯 Режим: Атака','#888')});
+$('modeScout').addEventListener('click',()=>{window.__gameMode='scout';$('modeScout').style.borderColor='var(--blue)';$('modeScout').style.background='rgba(77,166,255,.15)';$('modeAttack').style.borderColor='';$('modeAttack').style.background='';addNews('🕵️ Режим: Разведка. Кликните по городу для разведки.','#888')});
+$('launchBtn').addEventListener('click',()=>{if(map)requestLaunch(map.getCenter())});
+$('randomBombBtn').addEventListener('click',randomBombSelect);
+$('togglePanelBtn').addEventListener('click',()=>$('panel').classList.toggle('hidden'));
+$('pauseBtn').addEventListener('click',()=>{paused?resumeGame():pauseGame()});
+$('pauseResumeBtn').addEventListener('click',()=>resumeGame());
+$('radResetBtn').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();resetRadiation();});
+$('closeModalBtn').addEventListener('click',()=>$('recordModal').classList.remove('active'));
+$('endCloseBtn').addEventListener('click',()=>$('endingModal').classList.remove('active'));
+$('svetlovModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('active')});
+$('closeSettingsBtn').addEventListener('click',()=>$('settingsModal').classList.remove('active'));
+$('saveSettingsBtn').addEventListener('click',function(){customMusicUrl=$('customMusicInput').value.trim();customBgUrl=$('customBgInput').value.trim();windMode=$('windModeSelect').value;confirmMode=$('confirmModeSelect').value;localStorage.setItem('gsCM',customMusicUrl);localStorage.setItem('gsCB',customBgUrl);localStorage.setItem('gsWM',windMode);localStorage.setItem('gsCF',confirmMode);if(customMusicUrl)marchAudio.src=customMusicUrl;if(customBgUrl)document.getElementById('startOverlay').style.backgroundImage=`url('${customBgUrl}')`;$('settingsModal').classList.remove('active')});
+$('vasyutinSlider').addEventListener('input',function(){const v=parseInt(this.value);const h=$('vasyutinHint');if(v>=100&&!altuhaUnlocked){altuhaUnlocked=true;localStorage.setItem('gsAltUnlock','1');saveAll();if(h)h.textContent='✅ ВАСЮТИНСКОЕ ЧУДО АКТИВИРОВАНО!';showAchieve({ic:'🌸',n:'АЛЬТУХА от Илюхи разблокирована',d:'Секретный персонаж открыт! (Васютинское чудо)'});addNews('🌸 АЛЬТУХА от Илюхи присоединилась!','#f0f')}else if(h){h.textContent=v>=90?'Почти…':'Передвиньте ползунок, чтобы открыть скрытое…'}});
+$('settingsBtn').addEventListener('click',()=>{$('customMusicInput').value=customMusicUrl;$('customBgInput').value=customBgUrl;$('windModeSelect').value=windMode;$('confirmModeSelect').value=confirmMode;$('settingsModal').classList.add('active')});
+$('missionsBtn').addEventListener('click',()=>{renderMissions();$('missionModal').classList.add('active')});
+$('shopBtn').addEventListener('click',()=>{renderShop();$('shopModal').classList.add('active')});
+$('campaignBtn').addEventListener('click',()=>{renderCampaigns();$('campaignModal').classList.add('active')});
+$('leaderBtn').addEventListener('click',()=>{renderLeaderboard();$('leaderModal').classList.add('active')});
+$('warLogExportBtn').addEventListener('click',exportWarLog);
+$('leaderSelectBtn').addEventListener('click',()=>{renderLeaderSelect();$('leaderSelectModal').classList.add('active')});
+$('closeLeaderSelectBtn').addEventListener('click',()=>$('leaderSelectModal').classList.remove('active'));
+$('closeLeaderBtn').addEventListener('click',()=>$('leaderModal').classList.remove('active'));
+$('clearLeaderBtn').addEventListener('click',()=>{leaderboard=[];localStorage.setItem('gsLB',JSON.stringify(leaderboard));renderLeaderboard()});
+$('exportBtn').addEventListener('click',exportSave);
+$('importBtn').addEventListener('click',()=>{const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const fr=new FileReader();fr.onload=ev=>importSave(ev.target.result);fr.readAsText(e.target.files[0])};i.click()});
+$('prestigeBtn').addEventListener('click',()=>{renderPrestigeModal();$('prestigeModal').classList.add('active')});
+$('prestigeCancelBtn').addEventListener('click',()=>$('prestigeModal').classList.remove('active'));
+$('prestigeConfirmBtn').addEventListener('click',doPrestige);
+document.querySelectorAll('.height-btn').forEach(b=>b.addEventListener('click',function(){document.querySelectorAll('.height-btn').forEach(x=>x.classList.remove('active'));this.classList.add('active');detonationHeight=this.dataset.h}));
+$('difficultySelect').addEventListener('change',function(){difficulty=this.value});
+const vs=$('volumeSlider');vs.addEventListener('input',()=>{marchAudio.volume=vs.value/100});
+$('muteBtn').addEventListener('click',()=>{isMuted=!isMuted;marchAudio.muted=isMuted;$('muteBtn').textContent=isMuted?'🔇':'🔊'});
+$('confirmYes').addEventListener('click',()=>{if(pendingLaunch){$('confirmOverlay').classList.remove('active');executeLaunch(pendingLaunch);pendingLaunch=null}});
+$('confirmNo').addEventListener('click',()=>{pendingLaunch=null;$('confirmOverlay').classList.remove('active')});
+[$('settingsModal'),$('missionModal'),$('shopModal'),$('campaignModal'),$('leaderSelectModal')].forEach(m=>{if(m)m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('active')})});
+}
+// ========== INIT ==========
+document.addEventListener('click',function(ev){let el=ev.target&&ev.target.closest?ev.target.closest('button,a,select,.icon-btn,.tab-btn,.btn-pri,.btn-sec,label'):null;if(el){try{playClick()}catch(e){}}});
+initDOM();
+startDynamicWind();
+})();
+</script>
+</body>
+</html>
